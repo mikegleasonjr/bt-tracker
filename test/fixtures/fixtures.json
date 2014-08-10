@@ -1,0 +1,34 @@
+{
+    "engine": {
+        "config": {
+            "maxPeers": 80
+        },
+        "announceResult": {
+            "seeders": 14132,
+            "leechers": 21341,
+            "peers": {
+                "peer1": { "ip": "1.2.3.4", "port": 58901 },
+                "peer2": { "ip": "2.2.3.4", "port": 58902 },
+                "peer3": { "ip": "3.2.3.4", "port": 58903 },
+                "peer4": { "ip": "4.2.3.4", "port": 58904 },
+                "peer5": { "ip": "5.2.3.4", "port": 58905 },
+                "peer6": { "ip": "6.2.3.4", "port": 58906 },
+                "peer7": { "ip": "7.2.3.4", "port": 58907 },
+                "peer8": { "ip": "8.2.3.4", "port": 58908 },
+                "peer9": { "ip": "9.2.3.4", "port": 58909 },
+                "peer10": { "ip": "10.2.3.4", "port": 58910 }
+            }
+        }
+    },
+    "http": {
+        "config": {
+            "port": 80,
+            "trustProxy": false,
+            "interval": 600
+        },
+        "validAnnounceUrl": "/announce?info_hash=%124Vx%9A%BC%DE%F1%23Eg%89%AB%CD%EF%124Vx%9A&peer_id=-UM1840-%13u%d9Tb%df%d4%bd%c7w%82%e0&port=59696&uploaded=1024&downloaded=2048&left=4096&compact=1&event=started&numwant=50&ip=108.33.44.13&no_peer_id=1",
+        "validAnnounceUrlWithoutIP": "/announce?info_hash=%124Vx%9A%BC%DE%F1%23Eg%89%AB%CD%EF%124Vx%9A&peer_id=-UM1840-%13u%d9Tb%df%d4%bd%c7w%82%e0&port=59696&uploaded=1024&downloaded=2048&left=4096&compact=1&event=started&numwant=50&no_peer_id=1",
+        "validAnnounceUrlWithoutCompact": "/announce?info_hash=%124Vx%9A%BC%DE%F1%23Eg%89%AB%CD%EF%124Vx%9A&peer_id=-UM1840-%13u%d9Tb%df%d4%bd%c7w%82%e0&port=59696&uploaded=1024&downloaded=2048&left=4096&event=started&numwant=50&ip=108.33.44.13&no_peer_id=0",
+        "validAnnounceUrlWithNoPeerId": "/announce?info_hash=%124Vx%9A%BC%DE%F1%23Eg%89%AB%CD%EF%124Vx%9A&peer_id=-UM1840-%13u%d9Tb%df%d4%bd%c7w%82%e0&port=59696&uploaded=1024&downloaded=2048&left=4096&event=started&numwant=50&ip=108.33.44.13&compact=0&no_peer_id=1"
+    }
+}
