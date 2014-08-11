@@ -77,12 +77,12 @@ describe('memory backend', function() {
 
     describe('when incrementing seeders of an unknown swarm', function() {
         it('should create an empty swarm', function() {
-            backend.incrementSeeders('info-hash-1', sinon.spy());
+            backend.incSeeders('info-hash-1', sinon.spy());
             backend.swarms.should.have.keys('info-hash-1');
         });
 
         it('should have a seeders count of 1', function() {
-            backend.incrementSeeders('info-hash-1', sinon.spy());
+            backend.incSeeders('info-hash-1', sinon.spy());
             backend.swarms['info-hash-1'].should.containEql({ seeders: 1 });
         });
     });
@@ -91,29 +91,29 @@ describe('memory backend', function() {
         it('should return nothing', function() {
             var callback = sinon.spy();
 
-            backend.incrementSeeders('info-hash-1', callback);
+            backend.incSeeders('info-hash-1', callback);
 
             callback.calledWithExactly(null).should.be.true;
         });
 
         it('should increment the seeders', function() {
-            backend.incrementSeeders('info-hash-1', sinon.spy());
+            backend.incSeeders('info-hash-1', sinon.spy());
             backend.swarms['info-hash-1'].should.containEql({ seeders: 1 });
-            backend.incrementSeeders('info-hash-2', sinon.spy());
+            backend.incSeeders('info-hash-2', sinon.spy());
             backend.swarms['info-hash-1'].should.containEql({ seeders: 1 });
-            backend.incrementSeeders('info-hash-1', sinon.spy());
+            backend.incSeeders('info-hash-1', sinon.spy());
             backend.swarms['info-hash-1'].should.containEql({ seeders: 2 });
         });
     });
 
     describe('when decrementing seeders of an unknown swarm', function() {
         it('should create an empty swarm', function() {
-            backend.decrementSeeders('info-hash-1', sinon.spy());
+            backend.decSeeders('info-hash-1', sinon.spy());
             backend.swarms.should.have.keys('info-hash-1');
         });
 
         it('should have a seeders count of 0', function() {
-            backend.decrementSeeders('info-hash-1', sinon.spy());
+            backend.decSeeders('info-hash-1', sinon.spy());
             backend.swarms['info-hash-1'].should.containEql({ seeders: 0 });
         });
     });
@@ -122,7 +122,7 @@ describe('memory backend', function() {
         it('should return nothing', function() {
             var callback = sinon.spy();
 
-            backend.decrementSeeders('info-hash-1', callback);
+            backend.decSeeders('info-hash-1', callback);
 
             callback.calledWithExactly(null).should.be.true;
         });
@@ -131,7 +131,7 @@ describe('memory backend', function() {
             var callback = sinon.spy();
             backend._getSwarm('info-hash-1').seeders = 33;
 
-            backend.decrementSeeders('info-hash-1', callback);
+            backend.decSeeders('info-hash-1', callback);
 
             backend._getSwarm('info-hash-1').seeders.should.equal(32);
         });
@@ -140,8 +140,8 @@ describe('memory backend', function() {
             var callback = sinon.spy();
             backend._getSwarm('info-hash-1').seeders = 1;
 
-            backend.decrementSeeders('info-hash-1', callback);
-            backend.decrementSeeders('info-hash-1', callback);
+            backend.decSeeders('info-hash-1', callback);
+            backend.decSeeders('info-hash-1', callback);
 
             backend._getSwarm('info-hash-1').seeders.should.equal(0);
         });
@@ -149,12 +149,12 @@ describe('memory backend', function() {
 
     describe('when incrementing leechers of an unknown swarm', function() {
         it('should create an empty swarm', function() {
-            backend.incrementLeechers('info-hash-1', sinon.spy());
+            backend.incLeechers('info-hash-1', sinon.spy());
             backend.swarms.should.have.keys('info-hash-1');
         });
 
         it('should have a leechers count of 1', function() {
-            backend.incrementLeechers('info-hash-1', sinon.spy());
+            backend.incLeechers('info-hash-1', sinon.spy());
             backend.swarms['info-hash-1'].should.containEql({ leechers: 1 });
         });
     });
@@ -163,29 +163,29 @@ describe('memory backend', function() {
         it('should return nothing', function() {
             var callback = sinon.spy();
 
-            backend.incrementLeechers('info-hash-1', callback);
+            backend.incLeechers('info-hash-1', callback);
 
             callback.calledWithExactly(null).should.be.true;
         });
 
         it('should increment the leechers', function() {
-            backend.incrementLeechers('info-hash-1', sinon.spy());
+            backend.incLeechers('info-hash-1', sinon.spy());
             backend.swarms['info-hash-1'].should.containEql({ leechers: 1 });
-            backend.incrementLeechers('info-hash-2', sinon.spy());
+            backend.incLeechers('info-hash-2', sinon.spy());
             backend.swarms['info-hash-1'].should.containEql({ leechers: 1 });
-            backend.incrementLeechers('info-hash-1', sinon.spy());
+            backend.incLeechers('info-hash-1', sinon.spy());
             backend.swarms['info-hash-1'].should.containEql({ leechers: 2 });
         });
     });
 
     describe('when decrementing leechers of an unknown swarm', function() {
         it('should create an empty swarm', function() {
-            backend.decrementLeechers('info-hash-1', sinon.spy());
+            backend.decLeechers('info-hash-1', sinon.spy());
             backend.swarms.should.have.keys('info-hash-1');
         });
 
         it('should have a leechers count of 0', function() {
-            backend.decrementLeechers('info-hash-1', sinon.spy());
+            backend.decLeechers('info-hash-1', sinon.spy());
             backend.swarms['info-hash-1'].should.containEql({ leechers: 0 });
         });
     });
@@ -194,7 +194,7 @@ describe('memory backend', function() {
         it('should return nothing', function() {
             var callback = sinon.spy();
 
-            backend.decrementLeechers('info-hash-1', callback);
+            backend.decLeechers('info-hash-1', callback);
 
             callback.calledWithExactly(null).should.be.true;
         });
@@ -203,7 +203,7 @@ describe('memory backend', function() {
             var callback = sinon.spy();
             backend._getSwarm('info-hash-1').leechers = 33;
 
-            backend.decrementLeechers('info-hash-1', callback);
+            backend.decLeechers('info-hash-1', callback);
 
             backend._getSwarm('info-hash-1').leechers.should.equal(32);
         });
@@ -212,8 +212,8 @@ describe('memory backend', function() {
             var callback = sinon.spy();
             backend._getSwarm('info-hash-1').leechers = 1;
 
-            backend.decrementLeechers('info-hash-1', callback);
-            backend.decrementLeechers('info-hash-1', callback);
+            backend.decLeechers('info-hash-1', callback);
+            backend.decLeechers('info-hash-1', callback);
 
             backend._getSwarm('info-hash-1').leechers.should.equal(0);
         });
@@ -222,7 +222,7 @@ describe('memory backend', function() {
     describe('when deleting a peer from an unknown swarm', function() {
         it('should not create an empty swarm', function() {
             var spy = sinon.spy();
-            backend.deletePeer('info-hash-1', 'peer-id-1', spy);
+            backend.delPeer('info-hash-1', 'peer-id-1', spy);
             backend.swarms.should.not.have.keys('info-hash-1');
             spy.calledWithExactly(null).should.be.true;
         });
@@ -233,7 +233,7 @@ describe('memory backend', function() {
             var spy = sinon.spy();
                 backend.setPeer('info-hash-1', 'peer-id-1', { ip: '1.2.3.4' }, sinon.spy());
             backend.swarms['info-hash-1'].peers.should.have.keys('peer-id-1');
-            backend.deletePeer('info-hash-1', 'peer-id-1', spy);
+            backend.delPeer('info-hash-1', 'peer-id-1', spy);
             backend.swarms['info-hash-1'].peers.should.not.have.keys('peer-id-1');
             spy.calledWithExactly(null).should.be.true;
         });

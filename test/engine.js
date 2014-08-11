@@ -185,9 +185,9 @@ describe('engine', function() {
         describe('when a leecher is announcing as started', function() {
             it('should increment the leechers count', function(done) {
                 var parameters = validAnnounceParametersWith({ event: 'started', left: 1024 });
-                mock.expects('incrementSeeders')
+                mock.expects('incSeeders')
                     .never();
-                mock.expects('incrementLeechers')
+                mock.expects('incLeechers')
                     .once()
                     .withExactArgs(parameters.info_hash, sinon.match.func)
                     .yields(null);
@@ -196,15 +196,12 @@ describe('engine', function() {
             });
 
             describe('when the backend returns an error', function() {
-                it('should bubble up', function(done) {
+                it('should not bubble up', function(done) {
                     var parameters = validAnnounceParametersWith({ event: 'started', left: 1024 });
-                    mock.expects('incrementLeechers')
+                    mock.expects('incLeechers')
                         .yields('db connection error');
 
-                    engine.announce(parameters, function(err) {
-                        err.should.equal('db connection error');
-                        done();
-                    });
+                    engine.announce(parameters, done);
                 });
             });
         });
@@ -212,9 +209,9 @@ describe('engine', function() {
         describe('when a seeder is announcing as started', function() {
             it('should increment the seeders count', function(done) {
                 var parameters = validAnnounceParametersWith({ event: 'started', left: 0 });
-                mock.expects('incrementLeechers')
+                mock.expects('incLeechers')
                     .never();
-                mock.expects('incrementSeeders')
+                mock.expects('incSeeders')
                     .once()
                     .withExactArgs(parameters.info_hash, sinon.match.func)
                     .yields(null);
@@ -223,15 +220,12 @@ describe('engine', function() {
             });
 
             describe('when the backend returns an error', function() {
-                it('should bubble up', function(done) {
+                it('should not bubble up', function(done) {
                     var parameters = validAnnounceParametersWith({ event: 'started', left: 0 });
-                    mock.expects('incrementSeeders')
+                    mock.expects('incSeeders')
                         .yields('db connection error');
 
-                    engine.announce(parameters, function(err) {
-                        err.should.equal('db connection error');
-                        done();
-                    });
+                    engine.announce(parameters, done);
                 });
             });
         });
@@ -249,15 +243,12 @@ describe('engine', function() {
             });
 
             describe('when the backend returns an error', function() {
-                it('should bubble up', function(done) {
+                it('should not bubble up', function(done) {
                     var parameters = validAnnounceParametersWith({ event: 'started', left: 1024 });
                     mock.expects('setPeer')
                         .yields('db connection error');
 
-                    engine.announce(parameters, function(err) {
-                        err.should.equal('db connection error');
-                        done();
-                    });
+                    engine.announce(parameters, done);
                 });
             });
         });
@@ -265,9 +256,9 @@ describe('engine', function() {
         describe('when a leecher is announcing as stopped', function() {
             it('should decrement the leechers count', function(done) {
                 var parameters = validAnnounceParametersWith({ event: 'stopped', left: 1024 });
-                mock.expects('decrementSeeders')
+                mock.expects('decSeeders')
                     .never();
-                mock.expects('decrementLeechers')
+                mock.expects('decLeechers')
                     .once()
                     .withExactArgs(parameters.info_hash, sinon.match.func)
                     .yields(null);
@@ -276,15 +267,12 @@ describe('engine', function() {
             });
 
             describe('when the backend returns an error', function() {
-                it('should bubble up', function(done) {
+                it('should not bubble up', function(done) {
                     var parameters = validAnnounceParametersWith({ event: 'stopped', left: 1024 });
-                    mock.expects('decrementLeechers')
+                    mock.expects('decLeechers')
                         .yields('db connection error');
 
-                    engine.announce(parameters, function(err) {
-                        err.should.equal('db connection error');
-                        done();
-                    });
+                    engine.announce(parameters, done);
                 });
             });
         });
@@ -292,9 +280,9 @@ describe('engine', function() {
         describe('when a seeder is announcing as stopped', function() {
             it('should decrement the seeders count', function(done) {
                 var parameters = validAnnounceParametersWith({ event: 'stopped', left: 0 });
-                mock.expects('decrementLeechers')
+                mock.expects('decLeechers')
                     .never();
-                mock.expects('decrementSeeders')
+                mock.expects('decSeeders')
                     .once()
                     .withExactArgs(parameters.info_hash, sinon.match.func)
                     .yields(null);
@@ -303,15 +291,12 @@ describe('engine', function() {
             });
 
             describe('when the backend returns an error', function() {
-                it('should bubble up', function(done) {
+                it('should not bubble up', function(done) {
                     var parameters = validAnnounceParametersWith({ event: 'stopped', left: 0 });
-                    mock.expects('decrementSeeders')
+                    mock.expects('decSeeders')
                         .yields('db connection error');
 
-                    engine.announce(parameters, function(err) {
-                        err.should.equal('db connection error');
-                        done();
-                    });
+                    engine.announce(parameters, done);
                 });
             });
         });
@@ -319,7 +304,7 @@ describe('engine', function() {
         describe('when anybody is announcing as stopped', function() {
             it('should remove the peer from the swarm', function(done) {
                 var parameters = validAnnounceParametersWith({ event: 'stopped', left: 0 });
-                mock.expects('deletePeer')
+                mock.expects('delPeer')
                     .once()
                     .withExactArgs(parameters.info_hash, parameters.peer_id, sinon.match.func)
                     .yields(null);
@@ -328,15 +313,12 @@ describe('engine', function() {
             });
 
             describe('when the backend returns an error', function() {
-                it('should bubble up', function(done) {
+                it('should not bubble up', function(done) {
                     var parameters = validAnnounceParametersWith({ event: 'stopped', left: 1024 });
-                    mock.expects('deletePeer')
+                    mock.expects('delPeer')
                         .yields('db connection error');
 
-                    engine.announce(parameters, function(err) {
-                        err.should.equal('db connection error');
-                        done();
-                    });
+                    engine.announce(parameters, done);
                 });
             });
         });
@@ -344,7 +326,7 @@ describe('engine', function() {
         describe('when a leecher is announcing as completed', function() {
             it('should decrement the leechers count', function(done) {
                 var parameters = validAnnounceParametersWith({ event: 'completed', left: 0 });
-                mock.expects('decrementLeechers')
+                mock.expects('decLeechers')
                     .once()
                     .withExactArgs(parameters.info_hash, sinon.match.func)
                     .yields(null);
@@ -353,21 +335,18 @@ describe('engine', function() {
             });
 
             describe('when the backend returns an error when decrementing leechers', function() {
-                it('should bubble up', function(done) {
+                it('should not bubble up', function(done) {
                     var parameters = validAnnounceParametersWith({ event: 'completed', left: 0 });
-                    mock.expects('decrementLeechers')
+                    mock.expects('decLeechers')
                         .yields('db connection error');
 
-                    engine.announce(parameters, function(err) {
-                        err.should.equal('db connection error');
-                        done();
-                    });
+                    engine.announce(parameters, done);
                 });
             });
 
             it('should increment the seeders count', function(done) {
                 var parameters = validAnnounceParametersWith({ event: 'completed', left: 0 });
-                mock.expects('incrementSeeders')
+                mock.expects('incSeeders')
                     .once()
                     .withExactArgs(parameters.info_hash, sinon.match.func)
                     .yields(null);
@@ -376,15 +355,12 @@ describe('engine', function() {
             });
 
             describe('when the backend returns an error when incrementing seeders', function() {
-                it('should bubble up', function(done) {
+                it('should not bubble up', function(done) {
                     var parameters = validAnnounceParametersWith({ event: 'completed', left: 0 });
-                    mock.expects('incrementSeeders')
+                    mock.expects('incSeeders')
                         .yields('db connection error');
 
-                    engine.announce(parameters, function(err) {
-                        err.should.equal('db connection error');
-                        done();
-                    });
+                    engine.announce(parameters, done);
                 });
             });
         });
@@ -428,8 +404,8 @@ describe('engine', function() {
                 engine.announce(parameters, done);
             });
 
-            describe('when the swarm is not found and announcing without any event', function() {
-                it('should bubble up the error', function(done) {
+            describe('when the backend returns an error', function() {
+                it('should bubble up', function(done) {
                     var parameters = validAnnounceParameters();
                     mock.expects('getSwarm')
                         .yields('unknown swarm');

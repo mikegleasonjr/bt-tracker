@@ -47,7 +47,7 @@ describe('backends', function() {
     fs.readdirSync(path.join(__dirname, '../lib/backends')).forEach(function(source) {
         var Backend = require(path.join('../lib/backends/', source));
         var instance = new Backend();
-        var requiredMethods = ['getName', 'getPeer', 'setPeer', 'deletePeer', 'incrementSeeders', 'decrementSeeders', 'incrementLeechers', 'decrementLeechers', 'getSwarm'];
+        var requiredMethods = ['getName', 'getPeer', 'setPeer', 'delPeer', 'incSeeders', 'decSeeders', 'incLeechers', 'decLeechers', 'getSwarm'];
 
         describe(source, function() {
             requiredMethods.forEach(function(name) {
