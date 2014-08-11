@@ -12,7 +12,10 @@ lib/%.js: src/%.coffee
 	@$(BIN)/coffee -bcp $< > $@
 
 test: build
-	@$(BIN)/mocha --reporter spec --recursive
+	@$(BIN)/mocha --bail --reporter spec --recursive
+
+test-cov: build
+	@$(BIN)/mocha --bail --recursive --require blanket -R html-cov > coverage/coverage.html
 
 clean:
 	@rm -f $(LIB)
