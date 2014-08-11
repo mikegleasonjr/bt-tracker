@@ -3,6 +3,7 @@ var bencode = require('bencode');
 var sinon = require('sinon');
 var nodeHttp = require('http');
 var extend = require('util')._extend;
+var util = require('util');
 var HttpFactory = require('../lib/httpFactory');
 var Engine = require('../lib/engine');
 var pkg = require('../package.json');
@@ -28,14 +29,18 @@ describe('http', function() {
         http.setConfig(fixtures.http.config);
     });
 
-    describe('when enabling reverse proxy support', function() {
-        it('should honor the X-Forwarded-For request header', function(done) {
-            http.setConfig(configWith({ trustProxy: true }));
+    describe('when calling serve', function() {
+        it('should start listening on the configured port', function() {
+            sinon.stub(util, 'log');
+            http.setConfig(configWith({ port: 9188 }));
+            var mock = sinon.mock(http.app)
+                .expects('listen').once()
+                .withExactArgs(9188, sinon.match.func)
+                .yields();
 
-            request(http.app)
-                .get('/test-reverse-proxy')
-                .set('X-Forwarded-For', '1.2.3.4')
-                .expect(200, '1.2.3.4', done);
+            http.serve();
+            mock.verify();
+            util.log.restore();
         });
     });
 
