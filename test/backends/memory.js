@@ -22,6 +22,18 @@ describe('memory backend', function() {
         });
     });
 
+    describe('when creating a new swarm', function() {
+        it('should have default values', function() {
+            backend._getSwarm('info-hash-1');
+            backend.swarms['info-hash-1'].should.eql({
+                leechers: 0,
+                seeders: 0,
+                downloads: 0,
+                peers: { }
+            });
+        });
+    });
+
     describe('when getting a peer of an unknown swarm', function() {
         it('should not create an empty swarm', function() {
             backend.getPeer('info-hash-1', 'peer-id-1', sinon.spy());
@@ -216,6 +228,37 @@ describe('memory backend', function() {
             backend.decLeechers('info-hash-1', callback);
 
             backend._getSwarm('info-hash-1').leechers.should.equal(0);
+        });
+    });
+
+    describe('when incrementing downloads of an unknown swarm', function() {
+        it('should create an empty swarm', function() {
+            backend.incDownloads('info-hash-1', sinon.spy());
+            backend.swarms.should.have.keys('info-hash-1');
+        });
+
+        it('should have a downloads count of 1', function() {
+            backend.incDownloads('info-hash-1', sinon.spy());
+            backend.swarms['info-hash-1'].should.containEql({ downloads: 1 });
+        });
+    });
+
+    describe('when incrementing downloads of a swarm', function() {
+        it('should return nothing', function() {
+            var callback = sinon.spy();
+
+            backend.incDownloads('info-hash-1', callback);
+
+            callback.calledWithExactly(null).should.be.true;
+        });
+
+        it('should increment the downloads', function() {
+            backend.incDownloads('info-hash-1', sinon.spy());
+            backend.swarms['info-hash-1'].should.containEql({ downloads: 1 });
+            backend.incDownloads('info-hash-2', sinon.spy());
+            backend.swarms['info-hash-1'].should.containEql({ downloads: 1 });
+            backend.incDownloads('info-hash-1', sinon.spy());
+            backend.swarms['info-hash-1'].should.containEql({ downloads: 2 });
         });
     });
 

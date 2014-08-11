@@ -363,6 +363,26 @@ describe('engine', function() {
                     engine.announce(parameters, done);
                 });
             });
+
+            it('should increment the downloads count', function(done) {
+                var parameters = validAnnounceParametersWith({ event: 'completed', left: 0 });
+                mock.expects('incDownloads')
+                    .once()
+                    .withExactArgs(parameters.info_hash, sinon.match.func)
+                    .yields(null);
+
+                engine.announce(parameters, done);
+            });
+
+            describe('when the backend returns an error when incrementing downloads', function() {
+                it('should not bubble up', function(done) {
+                    var parameters = validAnnounceParametersWith({ event: 'completed', left: 0 });
+                    mock.expects('incDownloads')
+                        .yields('db connection error');
+
+                    engine.announce(parameters, done);
+                });
+            });
         });
 
         describe('when a client is announcing without an event', function() {
