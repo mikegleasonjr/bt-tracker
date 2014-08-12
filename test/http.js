@@ -44,6 +44,17 @@ describe('http', function() {
         });
     });
 
+    describe('when enabling reverse proxy support', function() {
+        it('should honor the X-Forwarded-For request header', function(done) {
+            http.setConfig(configWith({ trustProxy: true }));
+
+            request(http.app)
+                .get('/test-reverse-proxy')
+                .set('X-Forwarded-For', '1.2.3.4')
+                .expect(200, '1.2.3.4', done);
+        });
+    });
+
     describe('when disabling reverse proxy support', function() {
         it('should ignore the X-Forwarded-For request header', function(done) {
             http.setConfig(configWith({ trustProxy: false }));
