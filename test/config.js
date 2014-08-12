@@ -114,6 +114,20 @@ describe('config', function() {
         }));
     });
 
+    describe('when not specifying --http-compress', function() {
+        it('should still be defined in the configs and be false', mockStdio(function() {
+            config.parse([])
+                .should.containEql({ 'http-compress': false });
+        }));
+    });
+
+    describe('when specifying --http-compress', function() {
+        it('should be true', mockStdio(function() {
+            config.parse(['--http-compress'])
+                .should.containEql({ 'http-compress': true });
+        }));
+    });
+
     describe('when not specifying --udp', function() {
         it('should still be defined in the configs and be false', mockStdio(function() {
             config.parse([])

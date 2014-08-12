@@ -54,12 +54,14 @@ describe('bootstrap', function() {
             mock.expects('setConfig').once().withExactArgs(sinon.match({
                 port: 'http-port-12345',
                 trustProxy: 'http-trust-proxy-12345',
-                interval: 'interval-121'
+                interval: 'interval-121',
+                compress: 'compress-12345'
             }));
 
             config['http-port'] = 'http-port-12345';
             config['http-trust-proxy'] = 'http-trust-proxy-12345';
             config['interval'] = 'interval-121';
+            config['http-compress'] = 'compress-12345';
             bootstrap(config, engine, httpFactory);
 
             mock.verify();

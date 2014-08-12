@@ -22,6 +22,10 @@ describe('http', function() {
         http.app.get('/test-reverse-proxy', function(req, res) {
             res.send(req.ip);
         });
+
+        http.app.get('/test-http-compression', function(req, res) {
+            res.end(new Array(1025).join('a'));
+        });
     });
 
     beforeEach(function() {
@@ -63,6 +67,47 @@ describe('http', function() {
                 .get('/test-reverse-proxy')
                 .set('X-Forwarded-For', '1.2.3.4')
                 .expect(200, '127.0.0.1', done);
+        });
+    });
+
+    describe('when disabling HTTP compression', function() {
+        describe('when HTTP compression is requested by the client', function() {
+            it('should respond with an uncompressed response', function(done) {
+                http.setConfig(configWith({ compress: false }));
+                request(http.app)
+                    .get('/test-http-compression')
+                    .set('Accept-Encoding: gzip, deflate')
+                    .end(function(err, res) {
+                        res.headers.should.not.have.property('content-encoding');
+                        done(err);
+                    });
+            });
+        });
+    });
+
+    describe('when enabling HTTP compression', function() {
+        describe('when HTTP compression is not requested by the client', function() {
+            it('should respond with an uncompressed response', function(done) {
+                http.setConfig(configWith({ compress: true }));
+                request(http.app)
+                    .get('/test-http-compression')
+                    .set('Accept-Encoding', '')
+                    .end(function(err, res) {
+                        res.headers.should.not.have.property('content-encoding');
+                        done(err);
+                    });
+            });
+        });
+
+        describe('when HTTP compression is requested by the client', function() {
+            it('should respond with a compressed response', function(done) {
+                http.setConfig(configWith({ compress: true }));
+                request(http.app)
+                    .get('/test-http-compression')
+                    .set('Accept-Encoding: gzip, deflate')
+                    .expect('Content-Encoding', /(gzip|deflate)/)
+                    .expect(new Array(1025).join('a'), done);
+            });
         });
     });
 
