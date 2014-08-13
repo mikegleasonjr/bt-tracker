@@ -1,6 +1,8 @@
 var should = require('should');
 var sinon = require('sinon');
+var extend = require('util')._extend;
 var MemoryBackend = require('../../lib/backends/memory');
+var fixtures = require('../fixtures/fixtures.json').backend;
 
 
 describe('memory backend', function() {
@@ -17,354 +19,197 @@ describe('memory backend', function() {
     });
 
     describe('when a new instance is created', function() {
-        it('should have an empty swarms list', function() {
-            backend.swarms.should.eql({});
-        });
-    });
-
-    describe('when creating a new swarm', function() {
-        it('should have default values', function() {
-            backend._getSwarm('info-hash-1');
-            backend.swarms['info-hash-1'].should.eql({
-                leechers: 0,
-                seeders: 0,
-                downloads: 0,
-                peers: { }
+        it('should have an empty swarms list', function(done) {
+            backend.listSwarms(function(err, swarms) {
+                swarms.should.be.instanceof(Array).and.be.empty;
+                done();
             });
-        });
-    });
-
-    describe('when getting a peer of an unknown swarm', function() {
-        it('should not create an empty swarm', function() {
-            backend.getPeer('info-hash-1', 'peer-id-1', sinon.spy());
-            backend.swarms.should.not.have.keys('info-hash-1');
-        });
-
-        it('should return an undefined peer', function() {
-            var spy = sinon.spy();
-            backend.getPeer('info-hash-1', 'peer-id-1', spy);
-            spy.calledWithExactly(null, undefined).should.be.true;
-        });
-    });
-
-    describe('when getting a known peer from a known swarm', function() {
-        it('should return that peer', function() {
-            var peer = { ip: '1.2.3.4' };
-            var spy = sinon.spy();
-            var swarm = backend._getSwarm('info-hash-1');
-            swarm.peers['peer-id-1'] = peer;
-
-            backend.getPeer('info-hash-1', 'peer-id-1', spy);
-
-            spy.calledWithExactly(null, peer).should.be.true;
         });
     });
 
     describe('when setting a peer of an unknown swarm', function() {
-        it('should create an empty swarm', function() {
-            backend.setPeer('info-hash-1', 'peer-id-1', {}, sinon.spy());
-            backend.swarms.should.have.keys('info-hash-1');
+        it('should create the swarm', function(done) {
+            backend.setPeer('info-hash-1', 'peer-id-1', fixtures.setPeerPeer, sinon.spy());
+
+            backend.listSwarms(function(err, swarms) {
+                swarms.should.containEql('info-hash-1');
+                done();
+            });
         });
     });
 
     describe('when setting a peer', function() {
-        it('should exists in the swarm', function() {
-            var peer = { ip: '1.2.3.4' };
-            var swarm = backend._getSwarm('info-hash-1');
+        it('should be added to the swarm', function(done) {
+            backend.setPeer('info-hash-1', 'peer-id-1', peerWith({ ip: '1.2.3.4', port: 1234 }), sinon.spy());
+            backend.setPeer('info-hash-1', 'peer-id-2', peerWith({ ip: '5.6.7.8', port: 5789 }), sinon.spy());
+            backend.setPeer('info-hash-2', 'peer-id-3', peerWith({ ip: '9.10.11.12', port: 1011 }), sinon.spy());
 
-            backend.setPeer('info-hash-1', 'peer-id-1', peer, sinon.spy());
+            backend.getSwarm('info-hash-1', fixtures.getSwarmOptions, function(err, swarm) {
+                swarm.peers.should.have.properties('peer-id-1', 'peer-id-2');
+                swarm.peers['peer-id-1'].should.containEql({ ip: '1.2.3.4', port: 1234 });
+                swarm.peers['peer-id-2'].should.containEql({ ip: '5.6.7.8', port: 5789 });
 
-            swarm.peers['peer-id-1'].should.equal(peer);
+                backend.getSwarm('info-hash-2', fixtures.getSwarmOptions, function(err, swarm) {
+                    swarm.peers.should.have.properties('peer-id-3');
+                    swarm.peers['peer-id-3'].should.containEql({ ip: '9.10.11.12', port: 1011 });
+
+                    done();
+                });
+            });
+
         });
 
-        it('should not return anything', function() {
-            var peer = { ip: '1.2.3.4' };
-            var spy = sinon.spy();
+        it('should overwrite an existing one', function(done) {
+            backend.setPeer('info-hash-1', 'peer-id-1', peerWith({ ip: '1.2.3.4', port: 1234 }), sinon.spy());
+            backend.setPeer('info-hash-1', 'peer-id-1', peerWith({ ip: '5.6.7.8', port: 5789 }), sinon.spy());
 
-            backend.setPeer('info-hash-1', 'peer-id-1', peer, spy);
-
-            spy.calledWithExactly(null).should.be.true;
-        });
-    });
-
-    describe('when incrementing seeders of an unknown swarm', function() {
-        it('should create an empty swarm', function() {
-            backend.incSeeders('info-hash-1', sinon.spy());
-            backend.swarms.should.have.keys('info-hash-1');
+            backend.getSwarm('info-hash-1', fixtures.getSwarmOptions, function(err, swarm) {
+                swarm.peers['peer-id-1'].should.containEql({ ip: '5.6.7.8', port: 5789 });
+                done();
+            });
         });
 
-        it('should have a seeders count of 1', function() {
-            backend.incSeeders('info-hash-1', sinon.spy());
-            backend.swarms['info-hash-1'].should.containEql({ seeders: 1 });
-        });
-    });
-
-    describe('when incrementing seeders of a swarm', function() {
-        it('should return nothing', function() {
-            var callback = sinon.spy();
-
-            backend.incSeeders('info-hash-1', callback);
-
-            callback.calledWithExactly(null).should.be.true;
-        });
-
-        it('should increment the seeders', function() {
-            backend.incSeeders('info-hash-1', sinon.spy());
-            backend.swarms['info-hash-1'].should.containEql({ seeders: 1 });
-            backend.incSeeders('info-hash-2', sinon.spy());
-            backend.swarms['info-hash-1'].should.containEql({ seeders: 1 });
-            backend.incSeeders('info-hash-1', sinon.spy());
-            backend.swarms['info-hash-1'].should.containEql({ seeders: 2 });
-        });
-    });
-
-    describe('when decrementing seeders of an unknown swarm', function() {
-        it('should create an empty swarm', function() {
-            backend.decSeeders('info-hash-1', sinon.spy());
-            backend.swarms.should.have.keys('info-hash-1');
-        });
-
-        it('should have a seeders count of 0', function() {
-            backend.decSeeders('info-hash-1', sinon.spy());
-            backend.swarms['info-hash-1'].should.containEql({ seeders: 0 });
-        });
-    });
-
-    describe('when decrementing seeders of a swarm', function() {
-        it('should return nothing', function() {
-            var callback = sinon.spy();
-
-            backend.decSeeders('info-hash-1', callback);
-
-            callback.calledWithExactly(null).should.be.true;
-        });
-
-        it('should decrement the seeders count', function() {
-            var callback = sinon.spy();
-            backend._getSwarm('info-hash-1').seeders = 33;
-
-            backend.decSeeders('info-hash-1', callback);
-
-            backend._getSwarm('info-hash-1').seeders.should.equal(32);
-        });
-
-        it('should not decrement if already 0', function() {
-            var callback = sinon.spy();
-            backend._getSwarm('info-hash-1').seeders = 1;
-
-            backend.decSeeders('info-hash-1', callback);
-            backend.decSeeders('info-hash-1', callback);
-
-            backend._getSwarm('info-hash-1').seeders.should.equal(0);
-        });
-    });
-
-    describe('when incrementing leechers of an unknown swarm', function() {
-        it('should create an empty swarm', function() {
-            backend.incLeechers('info-hash-1', sinon.spy());
-            backend.swarms.should.have.keys('info-hash-1');
-        });
-
-        it('should have a leechers count of 1', function() {
-            backend.incLeechers('info-hash-1', sinon.spy());
-            backend.swarms['info-hash-1'].should.containEql({ leechers: 1 });
-        });
-    });
-
-    describe('when incrementing leechers of a swarm', function() {
-        it('should return nothing', function() {
-            var callback = sinon.spy();
-
-            backend.incLeechers('info-hash-1', callback);
-
-            callback.calledWithExactly(null).should.be.true;
-        });
-
-        it('should increment the leechers', function() {
-            backend.incLeechers('info-hash-1', sinon.spy());
-            backend.swarms['info-hash-1'].should.containEql({ leechers: 1 });
-            backend.incLeechers('info-hash-2', sinon.spy());
-            backend.swarms['info-hash-1'].should.containEql({ leechers: 1 });
-            backend.incLeechers('info-hash-1', sinon.spy());
-            backend.swarms['info-hash-1'].should.containEql({ leechers: 2 });
-        });
-    });
-
-    describe('when decrementing leechers of an unknown swarm', function() {
-        it('should create an empty swarm', function() {
-            backend.decLeechers('info-hash-1', sinon.spy());
-            backend.swarms.should.have.keys('info-hash-1');
-        });
-
-        it('should have a leechers count of 0', function() {
-            backend.decLeechers('info-hash-1', sinon.spy());
-            backend.swarms['info-hash-1'].should.containEql({ leechers: 0 });
-        });
-    });
-
-    describe('when decrementing leechers of a swarm', function() {
-        it('should return nothing', function() {
-            var callback = sinon.spy();
-
-            backend.decLeechers('info-hash-1', callback);
-
-            callback.calledWithExactly(null).should.be.true;
-        });
-
-        it('should decrement the leechers count', function() {
-            var callback = sinon.spy();
-            backend._getSwarm('info-hash-1').leechers = 33;
-
-            backend.decLeechers('info-hash-1', callback);
-
-            backend._getSwarm('info-hash-1').leechers.should.equal(32);
-        });
-
-        it('should not decrement if already 0', function() {
-            var callback = sinon.spy();
-            backend._getSwarm('info-hash-1').leechers = 1;
-
-            backend.decLeechers('info-hash-1', callback);
-            backend.decLeechers('info-hash-1', callback);
-
-            backend._getSwarm('info-hash-1').leechers.should.equal(0);
+        it('should yields', function(done) {
+            backend.setPeer('info-hash-1', 'peer-id-1', fixtures.setPeerPeer, done);
         });
     });
 
     describe('when incrementing downloads of an unknown swarm', function() {
-        it('should create an empty swarm', function() {
+        it('should create the swarm', function(done) {
             backend.incDownloads('info-hash-1', sinon.spy());
-            backend.swarms.should.have.keys('info-hash-1');
-        });
 
-        it('should have a downloads count of 1', function() {
-            backend.incDownloads('info-hash-1', sinon.spy());
-            backend.swarms['info-hash-1'].should.containEql({ downloads: 1 });
+            backend.listSwarms(function(err, swarms) {
+                swarms.should.containEql('info-hash-1');
+                done();
+            });
         });
     });
 
-    describe('when incrementing downloads of a swarm', function() {
-        it('should return nothing', function() {
-            var callback = sinon.spy();
-
-            backend.incDownloads('info-hash-1', callback);
-
-            callback.calledWithExactly(null).should.be.true;
-        });
-
-        it('should increment the downloads', function() {
+    describe('when incrementing downloads', function() {
+        it('should increment the swarms downloads count', function(done) {
+            backend.setPeer('info-hash-1', 'peer-id-1', fixtures.setPeerPeer, sinon.spy());
             backend.incDownloads('info-hash-1', sinon.spy());
-            backend.swarms['info-hash-1'].should.containEql({ downloads: 1 });
+            backend.incDownloads('info-hash-1', sinon.spy());
             backend.incDownloads('info-hash-2', sinon.spy());
-            backend.swarms['info-hash-1'].should.containEql({ downloads: 1 });
-            backend.incDownloads('info-hash-1', sinon.spy());
-            backend.swarms['info-hash-1'].should.containEql({ downloads: 2 });
+            backend.incDownloads('info-hash-2', sinon.spy());
+
+            backend.getSwarm('info-hash-1', fixtures.getSwarmOptions, function(err, swarm) {
+                swarm.downloads.should.eql(2);
+                backend.getSwarm('info-hash-2', fixtures.getSwarmOptions, function(err, swarm) {
+                    swarm.downloads.should.eql(2);
+                    done();
+                });
+            });
+
+        });
+
+        it('should yields', function(done) {
+            backend.incDownloads('info-hash-1', done);
         });
     });
 
-    describe('when deleting a peer from an unknown swarm', function() {
-        it('should not create an empty swarm', function() {
-            var spy = sinon.spy();
-            backend.delPeer('info-hash-1', 'peer-id-1', spy);
-            backend.swarms.should.not.have.keys('info-hash-1');
-            spy.calledWithExactly(null).should.be.true;
+    describe('when deleting an unkown peer from an unknown swarm', function() {
+        it('should not return an error', function(done) {
+            backend.delPeer('info-hash-1', 'peer-id-1', function(err) {
+                should(err).be.empty;
+                done();
+            });
+        });
+
+        it('should not create a swarm', function(done) {
+            backend.delPeer('info-hash-1', 'peer-id-1', sinon.spy());
+
+            backend.listSwarms(function(err, swarms) {
+                swarms.should.not.containEql('info-hash-1');
+                done();
+            });
         });
     });
 
-    describe('when deleting a known peer from an existing swarm', function() {
-        it('should be removed from the swarm', function() {
-            var spy = sinon.spy();
-                backend.setPeer('info-hash-1', 'peer-id-1', { ip: '1.2.3.4' }, sinon.spy());
-            backend.swarms['info-hash-1'].peers.should.have.keys('peer-id-1');
-            backend.delPeer('info-hash-1', 'peer-id-1', spy);
-            backend.swarms['info-hash-1'].peers.should.not.have.keys('peer-id-1');
-            spy.calledWithExactly(null).should.be.true;
+    describe('when deleting an unkown peer from a known swarm', function() {
+        it('should not return an error', function(done) {
+            backend.setPeer('info-hash-1', 'peer-id-existing', fixtures.setPeerPeer, sinon.spy());
+            backend.delPeer('info-hash-1', 'peer-id-non-existing', function(err) {
+                should(err).be.empty;
+                done();
+            });
+        });
+    });
+
+    describe('when deleting a peer', function() {
+        it('should be deleted from the swarm', function(done) {
+            backend.setPeer('info-hash-1', 'peer-id-1', fixtures.setPeerPeer, sinon.spy());
+            backend.setPeer('info-hash-1', 'peer-id-2', fixtures.setPeerPeer, sinon.spy());
+            backend.delPeer('info-hash-1', 'peer-id-1', sinon.spy());
+
+            backend.getSwarm('info-hash-1', fixtures.getSwarmOptions, function(err, swarm) {
+                swarm.peers.should.not.have.property('peer-id-1');
+                swarm.peers.should.have.property('peer-id-2');
+                done();
+            });
+        });
+
+        it('should yields', function(done) {
+            backend.delPeer('info-hash-1', 'peer-id-1', done);
         });
     });
 
     describe('when getting an unknown swarm', function() {
-        it('should not create an empty swarm', function() {
-            backend.getSwarm('info-hash-1', { maxPeers: 50 }, sinon.spy());
-            backend.swarms.should.not.have.keys('info-hash-1');
-        });
-
-        it('should return an error', function() {
-            var spy = sinon.spy();
-            backend.getSwarm('info-hash-1', { maxPeers: 50 }, spy);
-            spy.calledWithExactly('unknown swarm').should.be.true;
+        it('should return an error', function(done) {
+            backend.getSwarm('non-existing', fixtures.getSwarmOptions, function(err, swarm) {
+                err.should.equal('unknown swarm');
+                should(swarm).be.empty;
+                done();
+            });
         });
     });
 
-    describe('when getting a known swarm', function() {
-        var expectedSwarm = {
-            leechers: 142,
-            seeders: 123,
-            peers: {
-                'peer1': { ip: '1.2.3.4', port: 58901 },
-                'peer2': { ip: '2.2.3.4', port: 58902 },
-                'peer3': { ip: '3.2.3.4', port: 58903 },
-                'peer4': { ip: '4.2.3.4', port: 58904 },
-                'peer5': { ip: '5.2.3.4', port: 58905 },
-                'peer6': { ip: '6.2.3.4', port: 58906 },
-                'peer7': { ip: '7.2.3.4', port: 58907 },
-                'peer8': { ip: '8.2.3.4', port: 58908 },
-                'peer9': { ip: '9.2.3.4', port: 58909 },
-                'peer10': { ip: '10.2.3.4', port: 58910 }
-            }
-        };
+    describe('when getting a swarm', function() {
+        beforeEach(function() {
+            var noop = function() {};
+            backend.setPeer('info-hash-1', 'seeder-1', peerWith({ left: 0 }), noop);
+            backend.setPeer('info-hash-1', 'leecher-1', peerWith({ left: 2048 }), noop);
+            backend.setPeer('info-hash-1', 'seeder-2', peerWith({ left: 0 }), noop);
+            backend.setPeer('info-hash-1', 'leecher-2', peerWith({ left: 1024 }), noop);
+            backend.setPeer('info-hash-1', 'seeder-3', peerWith({ left: 0 }), noop);
+            backend.setPeer('info-hash-1', 'seeder-4', peerWith({ left: 0 }), noop);
+            backend.setPeer('info-hash-1', 'leecher-3', peerWith({ left: 1024 }), noop);
+            backend.setPeer('info-hash-1', 'leecher-4', peerWith({ left: 1024 }), noop);
+            backend.setPeer('info-hash-1', 'seeder-5', peerWith({ left: 0 }), noop);
+            backend.setPeer('info-hash-1', 'seeder-6', peerWith({ left: 0 }), noop);
+            backend.delPeer('info-hash-1', 'seeder-1', noop);
+        });
 
-        it('should return the number of leechers', function(next) {
-            backend.swarms['info-hash-1'] = expectedSwarm;
-            backend.getSwarm('info-hash-1', { maxPeers: 50 }, function(err, swarm) {
-                swarm.should.containEql({ leechers: 142 });
-                next(err);
+        it('should return the number of leechers', function() {
+            backend.getSwarm('info-hash-1', fixtures.getSwarmOptions, function(err, swarm) {
+                swarm.leechers.should.equal(4);
             });
         });
 
-        it('should return the number of seeders', function(next) {
-            backend.swarms['info-hash-1'] = expectedSwarm;
-            backend.getSwarm('info-hash-1', { maxPeers: 50 }, function(err, swarm) {
-                swarm.should.containEql({ seeders: 123 });
-                next(err);
-            });
-        });
-
-        it('should return the peers', function(next) {
-            backend.swarms['info-hash-1'] = expectedSwarm;
-            backend.getSwarm('info-hash-1', { maxPeers: 50 }, function(err, swarm) {
-                ('peers' in swarm).should.be.true;
-                next(err);
+        it('should return the number of seeders', function() {
+            backend.getSwarm('info-hash-1', fixtures.getSwarmOptions, function(err, swarm) {
+                swarm.seeders.should.equal(5);
             });
         });
 
         describe('when the number of requested peers matches the number of peers in the swarm', function() {
-            it('should return all the peers', function(next) {
-                backend.swarms['info-hash-1'] = expectedSwarm;
-                backend.getSwarm('info-hash-1', { maxPeers: 10 }, function(err, swarm) {
-                    swarm.peers.should.have.keys(Object.keys(expectedSwarm.peers));
-                    next(err);
-                });
-            });
-        });
-
-        describe('when the number of requested peers is greater than the number of peers in the swarm', function() {
-            it('should return all the peers', function(next) {
-                backend.swarms['info-hash-1'] = expectedSwarm;
-                backend.getSwarm('info-hash-1', { maxPeers: 13 }, function(err, swarm) {
-                    swarm.peers.should.have.keys(Object.keys(expectedSwarm.peers));
-                    next(err);
+            it('should return all the peers', function() {
+                backend.getSwarm('info-hash-1', swarmOptionsWith({ maxPeers: 9 }), function(err, swarm) {
+                    swarm.peers.should.have.keys(
+                        'seeder-2', 'seeder-3', 'seeder-4', 'seeder-5', 'seeder-6',
+                        'leecher-1', 'leecher-2', 'leecher-3', 'leecher-4'
+                    );
                 });
             });
         });
 
         describe('when the number of requested peers is smaller than the number of peers in the swarm', function() {
             it('should return a subset of the peers', function(next) {
-                backend.swarms['info-hash-1'] = expectedSwarm;
-                backend.getSwarm('info-hash-1', { maxPeers: 7 }, function(err, swarm) {
+                backend.getSwarm('info-hash-1', swarmOptionsWith({ maxPeers: 5 }), function(err, swarm) {
                     var peersIds = Object.keys(swarm.peers);
-                    var allPeersIds = Object.keys(expectedSwarm.peers);
+                    var allPeersIds = ['seeder-2', 'seeder-3', 'seeder-4', 'seeder-5', 'seeder-6', 'leecher-1', 'leecher-2', 'leecher-3', 'leecher-4'];
 
-                    peersIds.length.should.equal(7);
+                    peersIds.length.should.equal(5);
                     peersIds.forEach(function(id) {
                         allPeersIds.should.containEql(id);
                     });
@@ -374,11 +219,9 @@ describe('memory backend', function() {
             });
 
             it('should randomize the peers returned', function(next) {
-                backend.swarms['info-hash-1'] = expectedSwarm;
-
-                backend.getSwarm('info-hash-1', { maxPeers: 4 }, function(err, swarm1) {
-                    backend.getSwarm('info-hash-1', { maxPeers: 4 }, function(err, swarm2) {
-                        backend.getSwarm('info-hash-1', { maxPeers: 4 }, function(err, swarm3) {
+                backend.getSwarm('info-hash-1', swarmOptionsWith({ maxPeers: 4 }), function(err, swarm1) {
+                    backend.getSwarm('info-hash-1', swarmOptionsWith({ maxPeers: 4 }), function(err, swarm2) {
+                        backend.getSwarm('info-hash-1', swarmOptionsWith({ maxPeers: 4 }), function(err, swarm3) {
                             var compare = function(s1, s2) { return s1 > s2; };
                             var keys1 = Object.keys(swarm1.peers).sort(compare).join(', ');
                             var keys2 = Object.keys(swarm2.peers).sort(compare).join(', ');
@@ -392,4 +235,14 @@ describe('memory backend', function() {
             });
         });
     });
+
+    function peerWith(overrides) {
+        return extend(extend({}, fixtures.setPeerPeer), overrides);
+
+    }
+
+    function swarmOptionsWith(overrides) {
+        return extend(extend({}, fixtures.getSwarmOptions), overrides);
+
+    }
 });

@@ -21,8 +21,15 @@
         }
     },
     "backend": {
+        "setPeerPeer": {
+            "ip": "7.5.6.3",
+            "port": 2874,
+            "uploaded": 1024,
+            "downloaded": 2048,
+            "left": 4096
+        },
         "getSwarmOptions": {
-            "maxPeers": 123
+            "maxPeers": 50
         },
         "getSwarmResult": {
             "leechers": 142,
