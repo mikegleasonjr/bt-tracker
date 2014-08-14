@@ -7,17 +7,18 @@ require('should');
 
 
 describe('engine', function() {
-    var engine = new Engine();
-    var backend = new MemoryBackend();
+    var engine;
+    var backend;
     var mock;
 
-    before(function() {
-        engine.setBackend(backend);
-    });
-
     beforeEach(function() {
-        engine.setConfig(fixtures.engine.config);
+        backend = new MemoryBackend();
         backend.setConfig(fixtures.backend.config);
+
+        engine = new Engine();
+        engine.setConfig(fixtures.engine.config);
+        engine.setBackend(backend);
+
         mock = sinon.mock(backend);
     });
 
@@ -187,13 +188,13 @@ describe('engine', function() {
         describe('when announcing as started', function() {
             it('should set the peer in the swarm', function(done) {
                 var parameters = validAnnounceParametersWith({ event: 'started' });
-                mock.expects('setPeer')
-                    .once()
-                    .withExactArgs(parameters.info_hash, parameters.peer_id, fixtures.backend.setPeerPeer, sinon.match.func)
-                    .yields(null);
+                var spy = sinon.spy(backend, 'setPeer');
 
-                engine.announce(parameters, function() {
-                    done();
+                engine.announce(parameters, function(err) {
+                    spy.withArgs(parameters.info_hash, parameters.peer_id, fixtures.backend.setPeerPeer, sinon.match.func)
+                        .calledOnce.should.be.ok;
+                    spy.restore();
+                    done(err);
                 });
             });
 
@@ -246,9 +247,7 @@ describe('engine', function() {
                     .withExactArgs(parameters.info_hash, parameters.peer_id, fixtures.backend.setPeerPeer, sinon.match.func)
                     .yields(null);
 
-                engine.announce(parameters, function() {
-                    done();
-                });
+                engine.announce(parameters, done);
             });
 
             describe('when the backend returns an error while setting the peer', function() {
@@ -290,13 +289,15 @@ describe('engine', function() {
 
         describe('when a client is announcing without an event', function() {
             it('should set the peer in the swarm', function(done) {
-                var parameters = validAnnounceParameters();
-                mock.expects('setPeer')
-                    .once()
-                    .withExactArgs(parameters.info_hash, parameters.peer_id, fixtures.backend.setPeerPeer, sinon.match.func)
-                    .yields(null);
+                var parameters = validAnnounceParametersWith({ event: 'started' });
+                var spy = sinon.spy(backend, 'setPeer');
 
-                engine.announce(parameters, done);
+                engine.announce(parameters, function(err) {
+                    spy.withArgs(parameters.info_hash, parameters.peer_id, fixtures.backend.setPeerPeer, sinon.match.func)
+                        .calledOnce.should.be.ok;
+                    spy.restore();
+                    done(err);
+                });
             });
 
             describe('when the backend returns an error', function() {
