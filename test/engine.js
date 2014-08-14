@@ -321,10 +321,32 @@ describe('engine', function() {
                     .withExactArgs(parameters.info_hash, swarmOptionsWith({ maxPeers: 123987 }), sinon.match.func)
                     .yields(null, fixtures.backend.getSwarmResult);
 
-                // TODO, test/implement numwant
-
                 engine.setConfig({ maxPeers: 123987 });
                 engine.announce(parameters, done);
+            });
+
+            describe('when too many peers are requested by the client', function() {
+                it('should ask the backend to return the maximum number of peers allowed', function(done) {
+                    var parameters = validAnnounceParametersWith({ numwant: 200 });
+                    engine.setConfig(engineConfigWith({ maxPeers: 199 }));
+                    mock.expects('getSwarm')
+                        .withExactArgs(parameters.info_hash, swarmOptionsWith({ maxPeers: 199 }), sinon.match.func)
+                        .yields(null, fixtures.backend.getSwarmResult);
+
+                    engine.announce(parameters, done);
+                });
+            });
+
+            describe('when the number of peers requested by the client is less than the maximum number of peers allowed', function() {
+                it('should ask the backend to return the number of peers requested by the client', function(done) {
+                    var parameters = validAnnounceParametersWith({ numwant: 49 });
+                    engine.setConfig(engineConfigWith({ maxPeers: 50 }));
+                    mock.expects('getSwarm')
+                        .withExactArgs(parameters.info_hash, swarmOptionsWith({ maxPeers: 49 }), sinon.match.func)
+                        .yields(null, fixtures.backend.getSwarmResult);
+
+                    engine.announce(parameters, done);
+                });
             });
 
             describe('when the backend returns an error', function() {
@@ -400,14 +422,13 @@ describe('engine', function() {
         return extend(extend({}, fixtures.backend.getSwarmOptions), overrides);
     }
 
+    function engineConfigWith(overrides) {
+        return extend(extend({}, fixtures.engine.config), overrides);
+    }
+
     function validAnnounceParametersWithout(p) {
         var parameters = validAnnounceParameters();
         delete parameters[p];
         return parameters;
-    }
-
-    function peerWith(overrides) {
-        return extend(extend({}, fixtures.backend.setPeerPeer), overrides);
-
     }
 });
