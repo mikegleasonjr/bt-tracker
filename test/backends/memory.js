@@ -10,6 +10,7 @@ describe('memory backend', function() {
 
     beforeEach(function() {
         backend = new MemoryBackend();
+        backend.setConfig(fixtures.config);
     });
 
     describe('when getting the backend name', function() {
@@ -71,6 +72,61 @@ describe('memory backend', function() {
 
         it('should yields', function(done) {
             backend.setPeer('info-hash-1', 'peer-id-1', fixtures.setPeerPeer, done);
+        });
+    });
+
+    describe('when a peer expires', function() {
+        var clock;
+        var second = 1000;
+
+        before(function() {
+            clock = sinon.useFakeTimers();
+        });
+
+        after(function() {
+            clock.restore();
+        });
+
+        it('should be removed from the swarm', function(done) {
+            backend.setConfig(configWith({ peerTTL: 1100 }));
+            backend.setPeer('info-hash-1', 'peer-id-1', fixtures.setPeerPeer, sinon.spy());
+
+            clock.tick(1099 * second);
+
+            backend.getSwarm('info-hash-1', fixtures.getSwarmOptions, function(err, swarm) {
+                swarm.peers.should.have.keys('peer-id-1');
+
+                clock.tick(second);
+
+                backend.getSwarm('info-hash-1', fixtures.getSwarmOptions, function(err, swarm) {
+                    swarm.peers.should.not.have.keys('peer-id-1');
+                    done();
+                });
+            });
+        });
+
+        describe('when a peer is overwritten', function() {
+            it('should reset its expiration', function(done) {
+                backend.setConfig(configWith({ peerTTL: 900 }));
+                backend.setPeer('info-hash-1', 'peer-id-1', fixtures.setPeerPeer, sinon.spy());
+
+                clock.tick(800 * second);
+
+                backend.setPeer('info-hash-1', 'peer-id-1', fixtures.setPeerPeer, sinon.spy());
+
+                clock.tick(899 * second);
+
+                backend.getSwarm('info-hash-1', fixtures.getSwarmOptions, function(err, swarm) {
+                    swarm.peers.should.have.keys('peer-id-1');
+
+                    clock.tick(second);
+
+                    backend.getSwarm('info-hash-1', fixtures.getSwarmOptions, function(err, swarm) {
+                        swarm.peers.should.not.have.keys('peer-id-1');
+                        done();
+                    });
+                });
+            });
         });
     });
 
@@ -243,6 +299,9 @@ describe('memory backend', function() {
 
     function swarmOptionsWith(overrides) {
         return extend(extend({}, fixtures.getSwarmOptions), overrides);
+    }
 
+    function configWith(overrides) {
+        return extend(extend({}, fixtures.config), overrides);
     }
 });

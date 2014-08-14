@@ -22,7 +22,7 @@ describe('bootstrap', function() {
 
     describe('when bootstrapping the tracker', function() {
         it('should set the requested backend to the engine', function() {
-            var config = new Config().parse(['--no-http'], true);
+            var config = new Config().parse([], true);
             var expectedBackend = backends.get('memory');
             var mock = sinon.mock(engine).expects('setBackend').once().withExactArgs(expectedBackend);
 
@@ -33,7 +33,7 @@ describe('bootstrap', function() {
         });
 
         it('should configure the engine', function() {
-            var config = new Config().parse(['--no-http'], true);
+            var config = new Config().parse([], true);
             var mock = sinon.mock(engine).expects('setConfig').once().withExactArgs(sinon.match({
                 maxPeers: 'max-peers-123'
             }));
@@ -43,6 +43,19 @@ describe('bootstrap', function() {
 
             mock.verify();
             engine.setConfig.restore();
+        });
+
+        it('should configure the backend', function() {
+            var backend = backends.get('memory');
+            var config = new Config().parse(['--interval', '620'], true);
+            var mock = sinon.mock(backend).expects('setConfig').once().withExactArgs(sinon.match({
+                peerTTL: 620 * 3
+            }));
+
+            bootstrap(config, engine, httpFactory);
+
+            mock.verify();
+            backend.setConfig.restore();
         });
     });
 

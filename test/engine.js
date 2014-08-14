@@ -17,6 +17,7 @@ describe('engine', function() {
 
     beforeEach(function() {
         engine.setConfig(fixtures.engine.config);
+        backend.setConfig(fixtures.backend.config);
         mock = sinon.mock(backend);
     });
 

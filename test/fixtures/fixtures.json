@@ -21,6 +21,9 @@
         }
     },
     "backend": {
+        "config": {
+            "peerTTL": 1201
+        },
         "setPeerPeer": {
             "ip": "7.5.6.3",
             "port": 2874,
