@@ -132,8 +132,8 @@ describe('bootstrap', function() {
                 interval: 'interval-121'
             }));
 
-            config['udp-port'] = 'udp-port-12345';
-            config['interval'] = 'interval-121';
+            config.udpPort = 'udp-port-12345';
+            config.interval = 'interval-121';
             bootstrap(config, engine, httpFactory, udpFactory);
 
             mock.verify();
