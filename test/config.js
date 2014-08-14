@@ -142,6 +142,49 @@ describe('config', function() {
         }));
     });
 
+    describe('when not specifying --udp-port', function() {
+        it('should still be defined in the configs and be 8080', mockStdio(function() {
+            config.parse([])
+                .should.containEql({ 'udp-port': 8080 });
+        }));
+    });
+
+    describe('when specifying the udp port via an environment variable', function() {
+        before(function() {
+            process.env.BTT_UDP_PORT = 11234;
+        });
+
+        after(function() {
+            delete process.env.BTT_UDP_PORT;
+        });
+
+        it('should have the value of the environment variable as the default value', mockStdio(function() {
+            config.parse([])
+                .should.containEql({ 'udp-port': 11234 });
+        }));
+    });
+
+    describe('when not specifying an argument to --udp-port', function() {
+        it('should display an error and quit', mockStdio(function() {
+            config.parse(['--udp-port']);
+            shouldExitWithError('Missing argument value: udp-port');
+        }));
+    });
+
+    describe('when specifying an invalid argument to --udp-port', function() {
+        it('should display an error and quit', mockStdio(function() {
+            config.parse(['--udp-port', 'abc']);
+            shouldExitWithError('Invalid argument value: udp-port');
+        }));
+    });
+
+    describe('when specifying an argument to --udp-port', function() {
+        it('should have the value of the argument', mockStdio(function() {
+            config.parse(['--udp-port', '15352'])
+                .should.containEql({ 'udp-port': 15352 });
+        }));
+    });
+
     describe('when not specifying --list-backends', function() {
         it('should still be defined in the configs and be false', mockStdio(function() {
             config.parse([])
@@ -188,13 +231,6 @@ describe('config', function() {
         it('should display a notice to use at least one server and quit', mockStdio(function() {
             config.parse(['--no-http', '--no-udp']);
             shouldExitWithError('Please start an HTTP server (--http) and or a UDP server (--udp)');
-        }));
-    });
-
-    describe('when requesting an UDP server with --udp', function() {
-        it('should print a not implemented error and quit', mockStdio(function() {
-            config.parse(['--udp']);
-            shouldExitWithError('The UDP server is not yet implemented...');
         }));
     });
 
