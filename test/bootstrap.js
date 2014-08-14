@@ -38,7 +38,7 @@ describe('bootstrap', function() {
                 maxPeers: 'max-peers-123'
             }));
 
-            config['max-peers'] = 'max-peers-123';
+            config.maxPeers = 'max-peers-123';
             bootstrap(config, engine, httpFactory);
 
             mock.verify();
@@ -71,10 +71,10 @@ describe('bootstrap', function() {
                 compress: 'compress-12345'
             }));
 
-            config['http-port'] = 'http-port-12345';
-            config['http-trust-proxy'] = 'http-trust-proxy-12345';
-            config['interval'] = 'interval-121';
-            config['http-compress'] = 'compress-12345';
+            config.httpPort = 'http-port-12345';
+            config.httpTrustProxy = 'http-trust-proxy-12345';
+            config.interval = 'interval-121';
+            config.httpCompress = 'compress-12345';
             bootstrap(config, engine, httpFactory);
 
             mock.verify();
