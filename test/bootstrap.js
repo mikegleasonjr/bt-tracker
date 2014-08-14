@@ -130,7 +130,7 @@ describe('bootstrap', function() {
             mock.expects('setConfig').once().withExactArgs(sinon.match({
                 port: 'udp-port-12345',
                 interval: 'interval-121'
-            }));
+            })).returns(udp);
 
             config.udpPort = 'udp-port-12345';
             config.interval = 'interval-121';
@@ -142,7 +142,7 @@ describe('bootstrap', function() {
         it('should set the engine to the udp server', function() {
             var config = new Config().parse(['--udp']);
             var mock = sinon.mock(udp);
-            mock.expects('setEngine').once().withExactArgs(engine);
+            mock.expects('setEngine').once().withExactArgs(engine).returns(udp);
             mock.expects('serve');
 
             bootstrap(config, engine, httpFactory, udpFactory);
@@ -154,8 +154,8 @@ describe('bootstrap', function() {
             var config = new Config().parse(['--udp']);
             var mock = sinon.mock(udp);
             var serve = mock.expects('serve').once().withExactArgs();
-            mock.expects('setEngine').calledBefore(serve);
-            mock.expects('setConfig').calledBefore(serve);
+            mock.expects('setEngine').returns(udp).calledBefore(serve);
+            mock.expects('setConfig').returns(udp).calledBefore(serve);
 
             bootstrap(config, engine, httpFactory, udpFactory);
 
