@@ -75,7 +75,7 @@ describe('bootstrap', function() {
                 trustProxy: 'http-trust-proxy-12345',
                 interval: 'interval-121',
                 compress: 'compress-12345'
-            }));
+            })).returns(http);
 
             config.httpPort = 'http-port-12345';
             config.httpTrustProxy = 'http-trust-proxy-12345';
@@ -89,7 +89,7 @@ describe('bootstrap', function() {
         it('should set the engine to the http server', function() {
             var config = new Config().parse(['--http']);
             var mock = sinon.mock(http);
-            mock.expects('setEngine').once().withExactArgs(engine);
+            mock.expects('setEngine').once().withExactArgs(engine).returns(http);
             mock.expects('serve');
 
             bootstrap(config, engine, httpFactory, udpFactory);
@@ -101,8 +101,8 @@ describe('bootstrap', function() {
             var config = new Config().parse(['--http']);
             var mock = sinon.mock(http);
             var serve = mock.expects('serve').once().withExactArgs();
-            mock.expects('setEngine').calledBefore(serve);
-            mock.expects('setConfig').calledBefore(serve);
+            mock.expects('setEngine').returns(http).calledBefore(serve);
+            mock.expects('setConfig').returns(http).calledBefore(serve);
 
             bootstrap(config, engine, httpFactory, udpFactory);
 
