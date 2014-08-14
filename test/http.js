@@ -10,6 +10,7 @@ var pkg = require('../package.json');
 var fixtures = require('./fixtures/fixtures.json');
 var express = require('express');
 var compact2string = require('compact2string');
+require('should');
 
 
 describe('http', function() {
