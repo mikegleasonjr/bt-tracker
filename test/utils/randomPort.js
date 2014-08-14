@@ -1,13 +1,10 @@
-var portscanner = require('portscanner');
+var http = require('http');
 
 
-module.exports = function(done, callback) {
-    portscanner.findAPortNotInUse(10000, 20000, '127.0.0.1', function(err, port) {
-        if (err) {
-            done(err);
-        }
-        else {
-            callback(port);
-        }
+module.exports = function(callback) {
+    var server = http.createServer().listen(0, function() {
+        var port = this.address().port;
+        server.close();
+        callback(port);
     });
 };

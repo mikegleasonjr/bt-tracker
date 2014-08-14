@@ -31,7 +31,6 @@
         "blanket": "*",
         "compact2string": "*",
         "mocha": "*",
-        "portscanner": "*",
         "should": "*",
         "sinon": "*",
         "supertest": "*"

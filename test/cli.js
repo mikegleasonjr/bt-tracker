@@ -1,3 +1,4 @@
+var request = require('supertest');
 var givenCli = require('./utils/cli');
 var givenAvailableRandomPort = require('./utils/randomPort');
 var backends = require('../lib/backends');
@@ -26,12 +27,15 @@ describe('command-line interface', function() {
 
     describe('when requesting an HTTP server on a specific port using arguments', function() {
         it('should start an HTTP server on that port', function(done) {
-            givenAvailableRandomPort(done, function(port) {
+            givenAvailableRandomPort(function(port) {
                 givenCli()
                     .withParams(['--http', '--http-port', port])
                     .whenStdout('HTTP server listening on port')
-                    .expectPort(port)
-                    .toBe('open')
+                    .check(function(done) {
+                        request('http://localhost:' + port)
+                            .get('/heartbeat')
+                            .expect(200, 'OK', done);
+                    })
                     .onRun(done);
             });
         });
@@ -39,13 +43,16 @@ describe('command-line interface', function() {
 
     describe('when requesting an HTTP server on a specific port using environment variables', function() {
         it('should start an HTTP server on that port', function(done) {
-            givenAvailableRandomPort(done, function(port) {
+            givenAvailableRandomPort(function(port) {
                 givenCli()
                     .withParams(['--http'])
                     .withEnv('BTT_HTTP_PORT', port)
                     .whenStdout('HTTP server listening on port')
-                    .expectPort(port)
-                    .toBe('open')
+                    .check(function(done) {
+                        request('http://localhost:' + port)
+                            .get('/heartbeat')
+                            .expect(200, 'OK', done);
+                    })
                     .onRun(done);
             });
         });

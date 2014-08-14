@@ -1,4 +1,3 @@
-var portscanner = require('portscanner');
 var spawn = require('child_process').spawn;
 
 
@@ -8,8 +7,7 @@ module.exports = function() {
     var expectedStdout = undefined;
     var expectedStderr = undefined;
     var env = undefined;
-    var expectedPort = undefined;
-    var expectedPortStatus = undefined;
+    var checkHandler = undefined;
 
     var withParams = function(p) {
         params = p;
@@ -26,21 +24,22 @@ module.exports = function() {
             whenStdout: whenStdout,
             withEnv: withEnv,
             expectStdout: expectStdout,
-            expectStderr: expectStderr
+            expectStderr: expectStderr,
+            expect: check
         };
     };
 
     var withEnv = function(key, val) {
         env = { key: key, val: val };
         return {
-            whenStdout: whenStdout,
+            whenStdout: whenStdout
         };
     };
 
     var whenStdout = function(s) {
         waitForStdout = s;
         return {
-            expectPort: expectPort
+            check: check
         };
     };
 
@@ -58,15 +57,8 @@ module.exports = function() {
         };
     };
 
-    var expectPort = function(p) {
-        expectedPort = p;
-        return {
-            toBe: toBe
-        };
-    };
-
-    var toBe = function(s) {
-        expectedPortStatus = s;
+    var check = function(f) {
+        checkHandler = f;
         return {
             onRun: onRun
         };
@@ -89,12 +81,8 @@ module.exports = function() {
         proc.stdout.on('data', function(data) {
             if (waitForStdout) {
                 if (data.toString().indexOf(waitForStdout) !== -1) {
-                    if (expectedPort) {
-                        portscanner.checkPortStatus(expectedPort, '127.0.0.1', function(err, status) {
-                            status.should.equal(expectedPortStatus);
-                            proc.kill();
-                            callback(err);
-                        });
+                    if (checkHandler) {
+                        checkHandler(callback);
                     }
                 }
             }
