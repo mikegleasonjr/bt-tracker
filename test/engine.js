@@ -1,3 +1,4 @@
+var crypto = require('crypto');
 var extend = require('util')._extend;
 var sinon = require('sinon');
 var Engine = require('../lib/engine');
@@ -24,6 +25,42 @@ describe('engine', function() {
 
     afterEach(function() {
         mock.verify();
+    });
+
+    describe('connect', function() {
+        it('should return a pseudo-random connection id', function(done) {
+            engine.connect(function(err, connId1) {
+                connId1.should.be.instanceOf(Buffer);
+                connId1.length.should.equal(8);
+
+                engine.connect(function(err, connId2) {
+                    connId2.toString('hex').should.not.equal(connId1.toString('hex'));
+                    done(err);
+                });
+            });
+        });
+
+        it('should store the connection id in the backend', function(done) {
+            var spy = sinon.spy(backend, 'addConnId');
+
+            engine.connect(function(err, connId) {
+                spy.calledOnce.should.be.true;
+                spy.calledWithExactly(connId.toString('hex'), sinon.match.func).should.be.true;
+                done(err);
+            });
+        });
+
+        describe('when the backend returns an error', function() {
+            it('should bubble up', function(done) {
+                sinon.stub(backend, 'addConnId').yields('db connection error');
+
+                engine.connect(function(err) {
+                    err.should.equal('db connection error');
+                    backend.addConnId.restore();
+                    done();
+                });
+            });
+        });
     });
 
     describe('announce', function() {

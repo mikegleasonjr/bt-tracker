@@ -5,7 +5,7 @@ var MemoryBackend = require('../../lib/backends/memory');
 var fixtures = require('../fixtures/fixtures.json').backend;
 
 
-describe.only('memory backend', function() {
+describe('memory backend', function() {
     var backend;
 
     beforeEach(function() {
