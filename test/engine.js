@@ -63,6 +63,24 @@ describe('engine', function() {
         });
     });
 
+    describe('isConnected', function() {
+        it('should forward the call to the backend', function(done) {
+            var expectedConnId = crypto.pseudoRandomBytes(8);
+            var mock = sinon.mock(backend);
+            mock.expects('isConnId')
+                .once()
+                .withExactArgs(expectedConnId.toString('hex'), sinon.match.func)
+                .yields('some-error-19432', 'some-value-12365');
+
+            engine.isConnected(expectedConnId, function(err, isConnId) {
+                mock.verify();
+                err.should.equal('some-error-19432');
+                isConnId.should.equal('some-value-12365');
+                done();
+            });
+        });
+    });
+
     describe('announce', function() {
         describe('parameters', function() {
             describe('when called without info_hash', function() {
