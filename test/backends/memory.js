@@ -5,7 +5,7 @@ var MemoryBackend = require('../../lib/backends/memory');
 var fixtures = require('../fixtures/fixtures.json').backend;
 
 
-describe('memory backend', function() {
+describe.only('memory backend', function() {
     var backend;
 
     beforeEach(function() {
@@ -288,6 +288,78 @@ describe('memory backend', function() {
                         });
                     });
                 });
+            });
+        });
+    });
+
+    describe('when we check against a non-existing connection id', function() {
+        it('should return false', function(done) {
+            var randomConnId = Math.floor(Math.random() * 1000);
+
+            backend.isConnId(randomConnId, function(err, isConnId) {
+                isConnId.should.equal(false);
+                done(err);
+            });
+        });
+    });
+
+    describe('when setting a new connection id', function() {
+        it('should yields with no error', function(done) {
+            var expectedConnId = Math.floor(Math.random() * 1000);
+
+            backend.addConnId(expectedConnId, done);
+        });
+
+        it('should be stored in the backend', function(done) {
+            var expectedConnId = Math.floor(Math.random() * 1000);
+
+            backend.addConnId(expectedConnId, function() {});
+            backend.isConnId(expectedConnId, function(err, isConnId){
+                isConnId.should.equal(true);
+                done(err);
+            });
+        });
+
+        describe('when the connection id expires', function() {
+            var clock;
+            var minute = 1000 * 60;
+
+            before(function() {
+                clock = sinon.useFakeTimers();
+            });
+
+            after(function() {
+                clock.restore();
+            });
+
+            it('should be removed from the backend', function(done) {
+                var expiredConnId = Math.floor(Math.random() * 1000);
+
+                backend.addConnId(expiredConnId, function() {});
+
+                clock.tick(1.99 * minute);
+                backend.isConnId(expiredConnId, function(err, isConnId){
+                    isConnId.should.equal(true);
+
+                    clock.tick(0.01 * minute);
+                    backend.isConnId(expiredConnId, function(err, isConnId){
+                        isConnId.should.equal(false);
+                        done(err);
+                    });
+                });
+
+            });
+        });
+    });
+
+    describe('when setting an existing connection id', function() {
+        it('should returns an error', function(done) {
+            var existingConnId = Math.floor(Math.random() * 1000);
+
+            backend.addConnId(existingConnId, function() {});
+            backend.addConnId(existingConnId, function(err){
+                err.should.equal('connection id exists');
+                done();
             });
         });
     });
