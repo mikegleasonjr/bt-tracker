@@ -4,6 +4,7 @@ var sinon = require('sinon');
 var nodeHttp = require('http');
 var extend = require('util')._extend;
 var util = require('util');
+var crypto = require('crypto');
 var buffertools = require('buffertools');
 var HttpFactory = require('../lib/httpFactory');
 var Engine = require('../lib/engine');
@@ -179,7 +180,7 @@ describe('http', function() {
                     ip: '108.33.44.13',
                     noPeerId: 1
                 }, sinon.match.func)
-                .yields(null, fixtures.engine.announceResult);
+                .yields(null, announceResult());
 
             request(http.app)
                 .get(fixtures.http.validAnnounceUrl)
@@ -212,7 +213,7 @@ describe('http', function() {
                 mock.expects('announce')
                     .once()
                     .withExactArgs(sinon.match({ ip: '4.5.6.7' }), sinon.match.func)
-                    .yields(null, fixtures.engine.announceResult);
+                    .yields(null, announceResult());
 
                 request(http.app)
                     .get(fixtures.http.validAnnounceUrlWithoutIP)
@@ -225,7 +226,7 @@ describe('http', function() {
 
         describe('when the engine returns an error', function() {
             it('should return a bencoded error to the client', function(done) {
-                sinon.stub(engine, 'announce').yields('unexpected error', fixtures.engine.announceResult);
+                sinon.stub(engine, 'announce').yields('unexpected error', announceResult());
 
                 request(http.app)
                     .get(fixtures.http.validAnnounceUrl)
@@ -258,7 +259,7 @@ describe('http', function() {
 
             it('should return the configured interval', function(done) {
                 var expectedInterval = Math.floor(Math.random() * 1000);
-                sinon.stub(engine, 'announce').yields(null, fixtures.engine.announceResult);
+                sinon.stub(engine, 'announce').yields(null, announceResult());
 
                 http.setConfig(configWith({ interval: expectedInterval }));
 
@@ -276,7 +277,7 @@ describe('http', function() {
             });
 
             it('should return the number of seeders', function(done) {
-                sinon.stub(engine, 'announce').yields(null, fixtures.engine.announceResult);
+                sinon.stub(engine, 'announce').yields(null, announceResult());
 
                 nodeHttp.get(baseUrl + fixtures.http.validAnnounceUrl, function(res) {
                     var buffer = new Buffer(0);
@@ -292,7 +293,7 @@ describe('http', function() {
             });
 
             it('should return the number of leechers', function(done) {
-                sinon.stub(engine, 'announce').yields(null, fixtures.engine.announceResult);
+                sinon.stub(engine, 'announce').yields(null, announceResult());
 
                 nodeHttp.get(baseUrl + fixtures.http.validAnnounceUrl, function(res) {
                     var buffer = new Buffer(0);
@@ -309,7 +310,7 @@ describe('http', function() {
 
             describe('when a compact response has been requested', function() {
                 it('should return a compact peers list', function(done) {
-                    sinon.stub(engine, 'announce').yields(null, fixtures.engine.announceResult);
+                    sinon.stub(engine, 'announce').yields(null, announceResult());
 
                     nodeHttp.get(baseUrl + fixtures.http.validAnnounceUrl, function(res) {
                         var buffer = new Buffer(0);
@@ -339,37 +340,41 @@ describe('http', function() {
 
             describe('when a compact response has not been specified', function() {
                 it('should return a non-compact peers list', function(done) {
-                    sinon.stub(engine, 'announce').yields(null, fixtures.engine.announceResult);
+                    var expectedResult = announceResult();
+                    sinon.stub(engine, 'announce').yields(null, expectedResult);
 
-                    request(http.app)
-                        .get(fixtures.http.validAnnounceUrlWithoutCompact)
-                        .end(function(err, res) {
-                            var peers = bencode.decode(res.text).peers.map(function(peer) {
-                                peer['peer id'] = peer['peer id'].toString();
+                    nodeHttp.get(baseUrl + fixtures.http.validAnnounceUrlWithoutCompact, function(res) {
+                        var buffer = new Buffer(0);
+                        res.on('data', function(data) {
+                            buffer = Buffer.concat([buffer, data], buffer.length + data.length);
+                        });
+                        res.on('end', function() {
+                            var peers = bencode.decode(buffer).peers.map(function(peer) {
                                 peer.ip = peer.ip.toString();
                                 return peer;
                             });
 
-                            peers.should.eql([
-                                { 'peer id': 'peer1', ip: '1.2.3.4', port: 58901 },
-                                { 'peer id': 'peer2', ip: '2.2.3.4', port: 58902 },
-                                { 'peer id': 'peer3', ip: '3.2.3.4', port: 58903 },
-                                { 'peer id': 'peer4', ip: '4.2.3.4', port: 58904 },
-                                { 'peer id': 'peer5', ip: '5.2.3.4', port: 58905 },
-                                { 'peer id': 'peer6', ip: '6.2.3.4', port: 58906 },
-                                { 'peer id': 'peer7', ip: '7.2.3.4', port: 58907 },
-                                { 'peer id': 'peer8', ip: '8.2.3.4', port: 58908 },
-                                { 'peer id': 'peer9', ip: '9.2.3.4', port: 58909 },
-                                { 'peer id': 'peer10', ip: '10.2.3.4', port: 58910 },
-                            ]);
+                            peers.length.should.equal(expectedResult.peers.length);
+                            peers.should.containEql({ 'peer id': expectedResult.peers[0].id, ip: '1.2.3.4', port: 58901 });
+                            peers.should.containEql({ 'peer id': expectedResult.peers[1].id, ip: '2.2.3.4', port: 58902 });
+                            peers.should.containEql({ 'peer id': expectedResult.peers[2].id, ip: '3.2.3.4', port: 58903 });
+                            peers.should.containEql({ 'peer id': expectedResult.peers[3].id, ip: '4.2.3.4', port: 58904 });
+                            peers.should.containEql({ 'peer id': expectedResult.peers[4].id, ip: '5.2.3.4', port: 58905 });
+                            peers.should.containEql({ 'peer id': expectedResult.peers[5].id, ip: '6.2.3.4', port: 58906 });
+                            peers.should.containEql({ 'peer id': expectedResult.peers[6].id, ip: '7.2.3.4', port: 58907 });
+                            peers.should.containEql({ 'peer id': expectedResult.peers[7].id, ip: '8.2.3.4', port: 58908 });
+                            peers.should.containEql({ 'peer id': expectedResult.peers[8].id, ip: '9.2.3.4', port: 58909 });
+                            peers.should.containEql({ 'peer id': expectedResult.peers[9].id, ip: '10.2.3.4', port: 58910 });
+
                             engine.announce.restore();
-                            done(err);
+                            done();
                         });
+                    });
                 });
 
                 describe('when a client asks to ommit the peer id field', function() {
                     it('should return a non-compact peers list without the peer id field', function(done) {
-                        sinon.stub(engine, 'announce').yields(null, fixtures.engine.announceResult);
+                        sinon.stub(engine, 'announce').yields(null, announceResult());
 
                         request(http.app)
                             .get(fixtures.http.validAnnounceUrlWithNoPeerId)
@@ -402,5 +407,24 @@ describe('http', function() {
 
     function configWith(overrides) {
         return extend(extend({}, fixtures.http.config), overrides);
+    }
+
+    function announceResult() {
+        return {
+            "seeders": 14132,
+            "leechers": 21341,
+            "peers": [
+                { id: crypto.pseudoRandomBytes(20), ip: '1.2.3.4', port: 58901 },
+                { id: crypto.pseudoRandomBytes(20), ip: '2.2.3.4', port: 58902 },
+                { id: crypto.pseudoRandomBytes(20), ip: '3.2.3.4', port: 58903 },
+                { id: crypto.pseudoRandomBytes(20), ip: '4.2.3.4', port: 58904 },
+                { id: crypto.pseudoRandomBytes(20), ip: '5.2.3.4', port: 58905 },
+                { id: crypto.pseudoRandomBytes(20), ip: '6.2.3.4', port: 58906 },
+                { id: crypto.pseudoRandomBytes(20), ip: '7.2.3.4', port: 58907 },
+                { id: crypto.pseudoRandomBytes(20), ip: '8.2.3.4', port: 58908 },
+                { id: crypto.pseudoRandomBytes(20), ip: '9.2.3.4', port: 58909 },
+                { id: crypto.pseudoRandomBytes(20), ip: '10.2.3.4', port: 58910 }
+            ]
+        };
     }
 });

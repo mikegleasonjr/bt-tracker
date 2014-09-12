@@ -389,7 +389,7 @@ describe('engine', function() {
                 mock.expects('getSwarm').yields(null, fixtures.backend.getSwarmResult);
 
                 engine.announce(params, function(err, result) {
-                    result.should.containEql({ peers: fixtures.backend.getSwarmResult.peers });
+                    result.peers.should.equal(fixtures.backend.getSwarmResult.peers);
                     done();
                 });
             });
