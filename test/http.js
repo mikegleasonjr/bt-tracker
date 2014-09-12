@@ -4,6 +4,7 @@ var sinon = require('sinon');
 var nodeHttp = require('http');
 var extend = require('util')._extend;
 var util = require('util');
+var buffertools = require('buffertools');
 var HttpFactory = require('../lib/httpFactory');
 var Engine = require('../lib/engine');
 var pkg = require('../package.json');
@@ -160,21 +161,23 @@ describe('http', function() {
 
     describe('when requesting resource /announce', function() {
         it('should forward the parameters to the engine', function(done) {
+            var expectedInfoHash = new Buffer([0x12, 0x34, 0x56, 0x78, 0x9a, 0xbc, 0xde, 0xf1, 0x23, 0x45, 0x67, 0x89, 0xab, 0xcd, 0xef, 0x12, 0x34, 0x56, 0x78, 0x9a]);
+            var expectedPeerId = new Buffer([0x67, 0x89, 0xab, 0xcd, 0xef, 0x12, 0x34, 0x56, 0x78, 0x9a, 0x12, 0x34, 0x56, 0x78, 0x9a, 0xbc, 0xde, 0xf1, 0x23, 0x45]);
             var mock = sinon.mock(engine);
             mock.expects('announce')
                 .once()
                 .withExactArgs({
-                    info_hash: new Buffer('\x12\x34\x56\x78\x9a\xbc\xde\xf1\x23\x45\x67\x89\xab\xcd\xef\x12\x34\x56\x78\x9a').toString(),
-                    peer_id: unescape('-UM1840-%13u%d9Tb%df%d4%bd%c7w%82%e0'),
-                    port: '59696',
-                    uploaded: '1024',
-                    downloaded: '2048',
-                    left: '4096',
-                    compact: '1',
+                    infoHash: sinon.match(function(infoHash) { return buffertools.equals(infoHash, expectedInfoHash); }),
+                    peerId: sinon.match(function(peerId) { return buffertools.equals(peerId, expectedPeerId); }),
+                    port: 59696,
+                    uploaded: 1024,
+                    downloaded: 2048,
+                    left: 4096,
+                    compact: 1,
                     event: 'started',
-                    numwant: '50',
+                    numWant: 50,
                     ip: '108.33.44.13',
-                    no_peer_id: '1'
+                    noPeerId: 1
                 }, sinon.match.func)
                 .yields(null, fixtures.engine.announceResult);
 

@@ -58,9 +58,9 @@
             "interval": 600,
             "compress": false
         },
-        "validAnnounceUrl": "/announce?info_hash=%124Vx%9A%BC%DE%F1%23Eg%89%AB%CD%EF%124Vx%9A&peer_id=-UM1840-%13u%d9Tb%df%d4%bd%c7w%82%e0&port=59696&uploaded=1024&downloaded=2048&left=4096&compact=1&event=started&numwant=50&ip=108.33.44.13&no_peer_id=1",
-        "validAnnounceUrlWithoutIP": "/announce?info_hash=%124Vx%9A%BC%DE%F1%23Eg%89%AB%CD%EF%124Vx%9A&peer_id=-UM1840-%13u%d9Tb%df%d4%bd%c7w%82%e0&port=59696&uploaded=1024&downloaded=2048&left=4096&compact=1&event=started&numwant=50&no_peer_id=1",
-        "validAnnounceUrlWithoutCompact": "/announce?info_hash=%124Vx%9A%BC%DE%F1%23Eg%89%AB%CD%EF%124Vx%9A&peer_id=-UM1840-%13u%d9Tb%df%d4%bd%c7w%82%e0&port=59696&uploaded=1024&downloaded=2048&left=4096&event=started&numwant=50&ip=108.33.44.13&no_peer_id=0",
-        "validAnnounceUrlWithNoPeerId": "/announce?info_hash=%124Vx%9A%BC%DE%F1%23Eg%89%AB%CD%EF%124Vx%9A&peer_id=-UM1840-%13u%d9Tb%df%d4%bd%c7w%82%e0&port=59696&uploaded=1024&downloaded=2048&left=4096&event=started&numwant=50&ip=108.33.44.13&compact=0&no_peer_id=1"
+        "validAnnounceUrl": "/announce?info_hash=%124Vx%9A%BC%DE%F1%23Eg%89%AB%CD%EF%124Vx%9A&peer_id=g%89%AB%CD%EF%124Vx%9A%124Vx%9A%BC%DE%F1%23E&port=59696&uploaded=1024&downloaded=2048&left=4096&compact=1&event=started&numwant=50&ip=108.33.44.13&no_peer_id=1",
+        "validAnnounceUrlWithoutIP": "/announce?info_hash=%124Vx%9A%BC%DE%F1%23Eg%89%AB%CD%EF%124Vx%9A&peer_id=g%89%AB%CD%EF%124Vx%9A%124Vx%9A%BC%DE%F1%23E&port=59696&uploaded=1024&downloaded=2048&left=4096&compact=1&event=started&numwant=50&no_peer_id=1",
+        "validAnnounceUrlWithoutCompact": "/announce?info_hash=%124Vx%9A%BC%DE%F1%23Eg%89%AB%CD%EF%124Vx%9A&peer_id=g%89%AB%CD%EF%124Vx%9A%124Vx%9A%BC%DE%F1%23E&port=59696&uploaded=1024&downloaded=2048&left=4096&event=started&numwant=50&ip=108.33.44.13&no_peer_id=0",
+        "validAnnounceUrlWithNoPeerId": "/announce?info_hash=%124Vx%9A%BC%DE%F1%23Eg%89%AB%CD%EF%124Vx%9A&peer_id=g%89%AB%CD%EF%124Vx%9A%124Vx%9A%BC%DE%F1%23E&port=59696&uploaded=1024&downloaded=2048&left=4096&event=started&numwant=50&ip=108.33.44.13&compact=0&no_peer_id=1"
     }
 }
