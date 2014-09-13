@@ -20,6 +20,11 @@ describe('udp', function() {
 
     before(function() {
         engine.setBackend(backend);
+        sinon.stub(util, 'log');
+    });
+
+    after(function() {
+        util.log.restore();
     });
 
     beforeEach(function() {

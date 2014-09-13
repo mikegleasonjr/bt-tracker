@@ -82,12 +82,16 @@ module.exports = function() {
             if (waitForStdout) {
                 if (data.toString().indexOf(waitForStdout) !== -1) {
                     if (checkHandler) {
-                        checkHandler(callback);
+                        checkHandler(function() {
+                            proc.kill();
+                            callback();
+                        });
                     }
                 }
             }
             else if (expectedStdout) {
                 if (data.toString().indexOf(expectedStdout) !== -1) {
+                    proc.kill();
                     callback();
                 }
             }
