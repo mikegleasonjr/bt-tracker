@@ -1,6 +1,7 @@
 var backends = require('../lib/backends');
 var givenCli = require('./utils/cli');
 var MemoryBackend = require('../lib/backends/memory');
+var RedisBackend = require('../lib/backends/redis');
 var fs = require('fs');
 var path = require('path');
 require('should');
@@ -10,14 +11,22 @@ describe('backends', function() {
     describe('when listing backends', function() {
         it('should return the list of the available backends', function() {
             backends.list()
-                .should.containEql('memory');
+                .should.containEql('memory')
+                .and.containEql('redis');
         });
     });
 
-    describe('when requesting an instance of a backend', function() {
+    describe('when requesting an instance of the memory backend', function() {
         it('should exists', function() {
             backends.get('memory')
                 .should.be.an.instanceOf(MemoryBackend);
+        });
+    });
+
+    describe('when requesting an instance of the redis backend', function() {
+        it('should exists', function() {
+            backends.get('redis')
+                .should.be.an.instanceOf(RedisBackend);
         });
     });
 

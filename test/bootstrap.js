@@ -51,17 +51,36 @@ describe('bootstrap', function() {
             engine.setConfig.restore();
         });
 
-        it('should configure the backend', function() {
-            var backend = backends.get('memory');
-            var config = new Config().parse(['--interval', '620'], true);
-            var mock = sinon.mock(backend).expects('setConfig').once().withExactArgs(sinon.match({
-                peerTTL: 620 * 3
-            }));
+        describe('when the memory backend is selected', function() {
+            it('should configure the memory backend', function() {
+                var backend = backends.get('memory');
+                var config = new Config().parse(['--interval', '620'], true);
+                var mock = sinon.mock(backend).expects('setConfig').once().withExactArgs(sinon.match({
+                    peerTTL: 620 * 3
+                }));
 
-            bootstrap(config, engine, httpFactory, udpFactory);
+                bootstrap(config, engine, httpFactory, udpFactory);
 
-            mock.verify();
-            backend.setConfig.restore();
+                mock.verify();
+                backend.setConfig.restore();
+            });
+        });
+
+        describe('when the redis backend is selected', function() {
+            it('should configure the redis backend', function() {
+                var backend = backends.get('redis');
+                var config = new Config().parse(['--backend', 'redis', '--interval', '620', '--redis-host', '1.2.3.4', '--redis-port', '1234'], true);
+                var mock = sinon.mock(backend).expects('setConfig').once().withExactArgs(sinon.match({
+                    peerTTL: 620 * 3,
+                    host: '1.2.3.4',
+                    port: 1234
+                }));
+
+                bootstrap(config, engine, httpFactory, udpFactory);
+
+                mock.verify();
+                backend.setConfig.restore();
+            });
         });
     });
 
