@@ -1,7 +1,7 @@
 var backends = require('../lib/backends');
 var givenCli = require('./utils/cli');
 var MemoryBackend = require('../lib/backends/memory');
-var RedisBackend = require('../lib/backends/redis');
+var MongoDBBackend = require('../lib/backends/mongodb');
 var fs = require('fs');
 var path = require('path');
 require('should');
@@ -12,7 +12,7 @@ describe('backends', function() {
         it('should return the list of the available backends', function() {
             backends.list()
                 .should.containEql('memory')
-                .and.containEql('redis');
+                .and.containEql('mongodb');
         });
     });
 
@@ -23,10 +23,10 @@ describe('backends', function() {
         });
     });
 
-    describe('when requesting an instance of the redis backend', function() {
+    describe('when requesting an instance of the mongodb backend', function() {
         it('should exists', function() {
-            backends.get('redis')
-                .should.be.an.instanceOf(RedisBackend);
+            backends.get('mongodb')
+                .should.be.an.instanceOf(MongoDBBackend);
         });
     });
 
@@ -56,7 +56,7 @@ describe('backends', function() {
     fs.readdirSync(path.join(__dirname, '../lib/backends')).forEach(function(source) {
         var Backend = require(path.join('../lib/backends/', source));
         var instance = new Backend();
-        var requiredMethods = ['getName', 'setConfig', 'setPeer', 'delPeer', 'incDownloads', 'getSwarm', 'listSwarms', 'addConnId', 'isConnId'];
+        var requiredMethods = ['getName', 'setConfig', 'setPeer', 'delPeer', 'incDownloads', 'getSwarm', 'addConnId', 'isConnId'];
 
         describe(source, function() {
             requiredMethods.forEach(function(name) {

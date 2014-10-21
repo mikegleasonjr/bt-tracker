@@ -66,10 +66,10 @@ describe('bootstrap', function() {
             });
         });
 
-        describe('when the redis backend is selected', function() {
-            it('should configure the redis backend', function() {
-                var backend = backends.get('redis');
-                var config = new Config().parse(['--backend', 'redis', '--interval', '620', '--redis-host', '1.2.3.4', '--redis-port', '1234'], true);
+        describe('when the mongodb backend is selected', function() {
+            it('should configure the mongodb backend', function() {
+                var backend = backends.get('mongodb');
+                var config = new Config().parse(['--backend', 'mongodb', '--interval', '620', '--mongodb-host', '1.2.3.4', '--mongodb-port', '1234'], true);
                 var mock = sinon.mock(backend).expects('setConfig').once().withExactArgs(sinon.match({
                     peerTTL: 620 * 3,
                     host: '1.2.3.4',

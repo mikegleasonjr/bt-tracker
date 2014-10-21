@@ -227,82 +227,82 @@ describe('config', function() {
         }));
     });
 
-    describe('when not specifying --redis-host', function() {
+    describe('when not specifying --mongodb-host', function() {
         it('should still be defined in the configs and be localhot', mockStdio(function() {
             config.parse([])
-                .should.containEql({ redisHost: 'localhost' });
+                .should.containEql({ mongodbHost: 'localhost' });
         }));
     });
 
-    describe('when specifying the redis host via an environment variable', function() {
+    describe('when specifying the mongodb host via an environment variable', function() {
         before(function() {
-            process.env.BTT_REDIS_HOST = '1.2.3.4';
+            process.env.BTT_MONGODB_HOST = '1.2.3.4';
         });
 
         after(function() {
-            delete process.env.BTT_REDIS_HOST;
+            delete process.env.BTT_MONGODB_HOST;
         });
 
         it('should have the value of the environment variable as the default value', mockStdio(function() {
             config.parse([])
-                .should.containEql({ redisHost: '1.2.3.4' });
+                .should.containEql({ mongodbHost: '1.2.3.4' });
         }));
     });
 
-    describe('when not specifying an argument to --redis-host', function() {
+    describe('when not specifying an argument to --mongodb-host', function() {
         it('should display an error and quit', mockStdio(function() {
-            config.parse(['--redis-host']);
-            shouldExitWithError('Missing argument value: redis-host');
+            config.parse(['--mongodb-host']);
+            shouldExitWithError('Missing argument value: mongodb-host');
         }));
     });
 
-    describe('when specifying an argument to --redis-host', function() {
+    describe('when specifying an argument to --mongodb-host', function() {
         it('should have the value of the argument', mockStdio(function() {
-            config.parse(['--redis-host', 'redis.host.com'])
-                .should.containEql({ redisHost: 'redis.host.com' });
+            config.parse(['--mongodb-host', 'mongodb.host.com'])
+                .should.containEql({ mongodbHost: 'mongodb.host.com' });
         }));
     });
 
-    describe('when not specifying --redis-port', function() {
-        it('should still be defined in the configs and be 6379', mockStdio(function() {
+    describe('when not specifying --mongodb-port', function() {
+        it('should still be defined in the configs and be 27017', mockStdio(function() {
             config.parse([])
-                .should.containEql({ redisPort: 6379 });
+                .should.containEql({ mongodbPort: 27017 });
         }));
     });
 
-    describe('when specifying the redis port via an environment variable', function() {
+    describe('when specifying the mongodb port via an environment variable', function() {
         before(function() {
-            process.env.BTT_REDIS_PORT = 11234;
+            process.env.BTT_MONGODB_PORT = 11234;
         });
 
         after(function() {
-            delete process.env.BTT_REDIS_PORT;
+            delete process.env.BTT_MONGODB_PORT;
         });
 
         it('should have the value of the environment variable as the default value', mockStdio(function() {
             config.parse([])
-                .should.containEql({ redisPort: 11234 });
+                .should.containEql({ mongodbPort: 11234 });
         }));
     });
 
-    describe('when not specifying an argument to --redis-port', function() {
+    describe('when not specifying an argument to --mongodb-port', function() {
         it('should display an error and quit', mockStdio(function() {
-            config.parse(['--redis-port']);
-            shouldExitWithError('Missing argument value: redis-port');
+            config.parse(['--mongodb-port']);
+            shouldExitWithError('Missing argument value: mongodb-port');
         }));
     });
 
-    describe('when specifying an invalid argument to --redis-port', function() {
+    describe('when specifying an invalid argument to --mongodb-port', function() {
         it('should display an error and quit', mockStdio(function() {
-            config.parse(['--redis-port', 'abc']);
-            shouldExitWithError('Invalid argument value: redis-port');
+            config.parse(['--mongodb-port', 'abc']);
+            shouldExitWithError('Invalid argument value: mongodb-port');
         }));
     });
 
-    describe('when specifying an argument to --redis-port', function() {
+    describe('when specifying an argument to --mongodb-port', function() {
         it('should have the value of the argument', mockStdio(function() {
-            config.parse(['--redis-port', '15352'])
-                .should.containEql({ redisPort: 15352 });
+            config.parse(['--mongodb-port', '15352'])
+                .should.containEql({ mongodbPort: 15352 });
         }));
     });
 
@@ -361,7 +361,10 @@ describe('config', function() {
     }
 
     function shouldExitWithMessage(message) {
-        console.log.calledWith(sinon.match(message)).should.be.true;
+        var exitedwithMsg = console.log.calledWith(sinon.match(message)) ||
+            process.stdout.write.calledWith(sinon.match(message));
+
+        exitedwithMsg.should.be.true;
         process.exit.calledWith(0).should.be.true;
     }
 
@@ -370,6 +373,7 @@ describe('config', function() {
             sinon.stub(process, 'exit');
             sinon.stub(console, 'error');
             sinon.stub(console, 'log');
+            sinon.stub(process.stdout, 'write');
             try {
                 test();
             }
@@ -380,6 +384,7 @@ describe('config', function() {
                 process.exit.restore();
                 console.error.restore();
                 console.log.restore();
+                process.stdout.write.restore();
             }
         };
     }
