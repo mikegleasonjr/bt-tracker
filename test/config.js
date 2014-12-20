@@ -60,7 +60,7 @@ describe('config', function() {
     describe('when not specifying --http-port', function() {
         it('should still be defined in the configs and be 80', mockStdio(function() {
             config.parse([])
-                .should.containEql({ 'http-port': 80 });
+                .should.containEql({ httpPort: 80 });
         }));
     });
 
@@ -75,7 +75,7 @@ describe('config', function() {
 
         it('should have the value of the environment variable as the default value', mockStdio(function() {
             config.parse([])
-                .should.containEql({ 'http-port': 11234 });
+                .should.containEql({ httpPort: 11234 });
         }));
     });
 
@@ -96,35 +96,35 @@ describe('config', function() {
     describe('when specifying an argument to --http-port', function() {
         it('should have the value of the argument', mockStdio(function() {
             config.parse(['--http-port', '15352'])
-                .should.containEql({ 'http-port': 15352 });
+                .should.containEql({ httpPort: 15352 });
         }));
     });
 
     describe('when not specifying --http-trust-proxy', function() {
         it('should still be defined in the configs and be false', mockStdio(function() {
             config.parse([])
-                .should.containEql({ 'http-trust-proxy': false });
+                .should.containEql({ httpTrustProxy: false });
         }));
     });
 
     describe('when specifying --http-trust-proxy', function() {
         it('should be true', mockStdio(function() {
             config.parse(['--http-trust-proxy'])
-                .should.containEql({ 'http-trust-proxy': true });
+                .should.containEql({ httpTrustProxy: true });
         }));
     });
 
     describe('when not specifying --http-compress', function() {
         it('should still be defined in the configs and be false', mockStdio(function() {
             config.parse([])
-                .should.containEql({ 'http-compress': false });
+                .should.containEql({ httpCompress: false });
         }));
     });
 
     describe('when specifying --http-compress', function() {
         it('should be true', mockStdio(function() {
             config.parse(['--http-compress'])
-                .should.containEql({ 'http-compress': true });
+                .should.containEql({ httpCompress: true });
         }));
     });
 
@@ -145,7 +145,7 @@ describe('config', function() {
     describe('when not specifying --udp-port', function() {
         it('should still be defined in the configs and be 8080', mockStdio(function() {
             config.parse([])
-                .should.containEql({ 'udp-port': 8080 });
+                .should.containEql({ udpPort: 8080 });
         }));
     });
 
@@ -160,7 +160,7 @@ describe('config', function() {
 
         it('should have the value of the environment variable as the default value', mockStdio(function() {
             config.parse([])
-                .should.containEql({ 'udp-port': 11234 });
+                .should.containEql({ udpPort: 11234 });
         }));
     });
 
@@ -181,14 +181,14 @@ describe('config', function() {
     describe('when specifying an argument to --udp-port', function() {
         it('should have the value of the argument', mockStdio(function() {
             config.parse(['--udp-port', '15352'])
-                .should.containEql({ 'udp-port': 15352 });
+                .should.containEql({ udpPort: 15352 });
         }));
     });
 
     describe('when not specifying --list-backends', function() {
         it('should still be defined in the configs and be false', mockStdio(function() {
             config.parse([])
-                .should.containEql({ 'list-backends': false });
+                .should.containEql({ listBackends: false });
         }));
     });
 
@@ -202,7 +202,7 @@ describe('config', function() {
     describe('when not specifying --backend', function() {
         it('should still be defined in the configs and be memory', mockStdio(function() {
             config.parse([])
-                .should.containEql({ 'backend': 'memory' });
+                .should.containEql({ backend: 'memory' });
         }));
     });
 
@@ -216,7 +216,7 @@ describe('config', function() {
     describe('when specifying an argument to --backend', function() {
         it('should have the value of the argument', mockStdio(function() {
             config.parse(['--backend', 'memory'])
-                .should.containEql({ 'backend': 'memory' });
+                .should.containEql({ backend: 'memory' });
         }));
     });
 
@@ -237,14 +237,14 @@ describe('config', function() {
     describe('when not specifying --interval', function() {
         it('should still be defined in the configs and be 600', mockStdio(function() {
             config.parse([])
-                .should.containEql({ 'interval': 600 });
+                .should.containEql({ interval: 600 });
         }));
     });
 
     describe('when specifying an argument to --interval', function() {
         it('should have the value of the argument', mockStdio(function() {
             config.parse(['--interval', '123'])
-                .should.containEql({ 'interval': 123 });
+                .should.containEql({ interval: 123 });
         }));
     });
 
@@ -258,14 +258,14 @@ describe('config', function() {
     describe('when not specifying --max-peers', function() {
         it('should still be defined in the configs and be 80', mockStdio(function() {
             config.parse([])
-                .should.containEql({ 'max-peers': 80 });
+                .should.containEql({ maxPeers: 80 });
         }));
     });
 
     describe('when specifying an argument to --max-peers', function() {
         it('should have the value of the argument', mockStdio(function() {
             config.parse(['--max-peers', '123'])
-                .should.containEql({ 'max-peers': 123 });
+                .should.containEql({ maxPeers: 123 });
         }));
     });
 
@@ -282,7 +282,10 @@ describe('config', function() {
     }
 
     function shouldExitWithMessage(message) {
-        console.log.calledWith(sinon.match(message)).should.be.true;
+        var exitedwithMsg = console.log.calledWith(sinon.match(message)) ||
+            process.stdout.write.calledWith(sinon.match(message));
+
+        exitedwithMsg.should.be.true;
         process.exit.calledWith(0).should.be.true;
     }
 
@@ -291,6 +294,7 @@ describe('config', function() {
             sinon.stub(process, 'exit');
             sinon.stub(console, 'error');
             sinon.stub(console, 'log');
+            sinon.stub(process.stdout, 'write');
             try {
                 test();
             }
@@ -301,6 +305,7 @@ describe('config', function() {
                 process.exit.restore();
                 console.error.restore();
                 console.log.restore();
+                process.stdout.write.restore();
             }
         };
     }
