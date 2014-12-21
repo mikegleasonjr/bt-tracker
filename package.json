@@ -33,9 +33,9 @@
     "devDependencies": {
         "blanket": "*",
         "compact2string": "*",
+        "hippie": "*",
         "mocha": "*",
         "should": "*",
-        "sinon": "*",
-        "supertest": "*"
+        "sinon": "*"
     }
 }
