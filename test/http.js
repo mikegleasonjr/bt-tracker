@@ -71,7 +71,7 @@ describe('http', function() {
                 .get('/test-reverse-proxy')
                 .header('X-Forwarded-For', '1.2.3.4')
                 .expectStatus(200)
-                .expectBody('127.0.0.1')
+                .expectBody(/127\.0\.0\.1/)
                 .end(done);
         });
     });
