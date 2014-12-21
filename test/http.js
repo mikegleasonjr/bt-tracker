@@ -370,7 +370,7 @@ describe('http', function() {
                                     { ip: '7.2.3.4', port: 58907 },
                                     { ip: '8.2.3.4', port: 58908 },
                                     { ip: '9.2.3.4', port: 58909 },
-                                    { ip: '10.2.3.4', port: 58910 },
+                                    { ip: '10.2.3.4', port: 58910 }
                                 ]);
 
                                 engine.announce.restore();
