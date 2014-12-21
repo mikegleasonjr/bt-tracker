@@ -84,7 +84,7 @@ module.exports = function() {
                     if (checkHandler) {
                         checkHandler(function() {
                             proc.kill();
-                            callback();
+                            callback.apply(null, arguments);
                         });
                     }
                 }

@@ -1,4 +1,4 @@
-var request = require('supertest');
+var request = require('hippie');
 var dgram = require('dgram');
 var crypto = require('crypto');
 var givenCli = require('./utils/cli');
@@ -34,9 +34,12 @@ describe('command-line interface', function() {
                     .withParams(['--http', '--http-port', port])
                     .whenStdout('HTTP server listening on port')
                     .check(function(done) {
-                        request('http://localhost:' + port)
+                        request()
+                            .base('http://localhost:' + port)
                             .get('/heartbeat')
-                            .expect(200, 'OK', done);
+                            .expectStatus(200)
+                            .expectBody('OK')
+                            .end(done);
                     })
                     .onRun(done);
             });
@@ -51,9 +54,12 @@ describe('command-line interface', function() {
                     .withEnv('BTT_HTTP_PORT', port)
                     .whenStdout('HTTP server listening on port')
                     .check(function(done) {
-                        request('http://localhost:' + port)
+                        request()
+                            .base('http://localhost:' + port)
                             .get('/heartbeat')
-                            .expect(200, 'OK', done);
+                            .expectStatus(200)
+                            .expectBody('OK')
+                            .end(done);
                     })
                     .onRun(done);
             });

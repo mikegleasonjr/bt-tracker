@@ -1,7 +1,6 @@
-var request = require('supertest');
+var request = require('hippie');
 var bencode = require('bencode');
 var sinon = require('sinon');
-var nodeHttp = require('http');
 var extend = require('util')._extend;
 var util = require('util');
 var crypto = require('crypto');
@@ -57,8 +56,10 @@ describe('http', function() {
 
             request(http.app)
                 .get('/test-reverse-proxy')
-                .set('X-Forwarded-For', '1.2.3.4')
-                .expect(200, '1.2.3.4', done);
+                .header('X-Forwarded-For', '1.2.3.4')
+                .expectStatus(200)
+                .expectBody('1.2.3.4')
+                .end(done);
         });
     });
 
@@ -68,8 +69,10 @@ describe('http', function() {
 
             request(http.app)
                 .get('/test-reverse-proxy')
-                .set('X-Forwarded-For', '1.2.3.4')
-                .expect(200, '127.0.0.1', done);
+                .header('X-Forwarded-For', '1.2.3.4')
+                .expectStatus(200)
+                .expectBody('127.0.0.1')
+                .end(done);
         });
     });
 
@@ -79,7 +82,7 @@ describe('http', function() {
                 http.setConfig(configWith({ compress: false }));
                 request(http.app)
                     .get('/test-http-compression')
-                    .set('Accept-Encoding: gzip, deflate')
+                    .header('Accept-Encoding', 'gzip, deflate')
                     .end(function(err, res) {
                         res.headers.should.not.have.property('content-encoding');
                         done(err);
@@ -94,7 +97,7 @@ describe('http', function() {
                 http.setConfig(configWith({ compress: true }));
                 request(http.app)
                     .get('/test-http-compression')
-                    .set('Accept-Encoding', '')
+                    .header('Accept-Encoding', '')
                     .end(function(err, res) {
                         res.headers.should.not.have.property('content-encoding');
                         done(err);
@@ -107,9 +110,9 @@ describe('http', function() {
                 http.setConfig(configWith({ compress: true }));
                 request(http.app)
                     .get('/test-http-compression')
-                    .set('Accept-Encoding: gzip, deflate')
-                    .expect('Content-Encoding', /(gzip|deflate)/)
-                    .expect(new Array(1025).join('a'), done);
+                    .header('Accept-Encoding', 'gzip, deflate')
+                    .expectHeader('Content-Encoding', /(gzip|deflate)/)
+                    .end(done);
             });
         });
     });
@@ -118,13 +121,14 @@ describe('http', function() {
         it('should respond 200', function(done) {
             request(http.app)
                 .get('/heartbeat')
-                .expect(200, done);
+                .expectStatus(200)
+                .end(done);
         });
 
         it('should respond with text', function(done) {
             request(http.app)
                 .get('/heartbeat')
-                .expect('OK')
+                .expectBody('OK')
                 .end(done);
         });
     });
@@ -133,7 +137,8 @@ describe('http', function() {
         it('should respond 404', function(done) {
             request(http.app)
                 .get('/heartbeat/')
-                .expect(404, done);
+                .expectStatus(404)
+                .end(done);
         });
     });
 
@@ -143,19 +148,22 @@ describe('http', function() {
                 it('should respond with the response processing time in the headers', function(done) {
                     request(http.app)
                         .get(res)
-                        .expect('X-Response-Time', /[0-9]+ms/, done);
+                        .expectHeader('X-Response-Time', /[0-9]+ms/)
+                        .end(done);
                 });
 
                 it('should respond with the bt-tracker version in the headers', function(done) {
                     request(http.app)
                         .get(res)
-                        .expect('X-Powered-By', pkg.name + ' ' + pkg.version, done);
+                        .expectHeader('X-Powered-By', pkg.name + ' ' + pkg.version)
+                        .end(done);
                 });
 
                 it('should respond as text/plain', function(done) {
                     request(http.app)
                         .get(res)
-                        .expect('Content-Type', /text\/plain/, done);
+                        .expectHeader('Content-Type', /text\/plain/)
+                        .end(done);
                 });
             });
         });
@@ -183,11 +191,11 @@ describe('http', function() {
                 }, sinon.match.func)
                 .yields(null, announceResult());
 
-            request(http.app)
+            bencodedRequest()
                 .get(fixtures.http.validAnnounceUrl)
-                .end(function() {
+                .end(function(err) {
                     mock.verify();
-                    done();
+                    done(err);
                 });
         });
 
@@ -216,11 +224,11 @@ describe('http', function() {
                     .withExactArgs(sinon.match({ ip: '4.5.6.7' }), sinon.match.func)
                     .yields(null, announceResult());
 
-                request(http.app)
+                bencodedRequest()
                     .get(fixtures.http.validAnnounceUrlWithoutIP)
-                    .end(function() {
+                    .end(function(err) {
                         mock.verify();
-                        done();
+                        done(err);
                     });
             });
         });
@@ -229,9 +237,10 @@ describe('http', function() {
             it('should return a bencoded error to the client', function(done) {
                 sinon.stub(engine, 'announce').yields('unexpected error', announceResult());
 
-                request(http.app)
+                bencodedRequest()
                     .get(fixtures.http.validAnnounceUrl)
-                    .expect(200, bencode.encode({ 'failure reason': 'unexpected error' }).toString())
+                    .expectStatus(200)
+                    .expectBody({ 'failure reason': new Buffer('unexpected error') })
                     .end(function(err) {
                         engine.announce.restore();
                         done(err);
@@ -240,87 +249,57 @@ describe('http', function() {
         });
 
         describe('when the engine returns a valid response', function() {
-            // TODO, ugly hack because supertest/superagent does not support
-            // a `Buffer` response, they transform it to utf8 and we loose the
-            // original stream. We can't convert it back to a `Buffer` and
-            // properly bdecode it...
-            var server = nodeHttp.createServer(http.app);
-            var baseUrl;
-
-            before(function(done) {
-                server.listen(0, function() {
-                    baseUrl = 'http://localhost:' + server.address().port;
-                    done();
-                });
-            });
-
-            after(function() {
-                server.close();
-            });
-
             it('should return the configured interval', function(done) {
                 var expectedInterval = Math.floor(Math.random() * 1000);
                 sinon.stub(engine, 'announce').yields(null, announceResult());
 
                 http.setConfig(configWith({ interval: expectedInterval }));
 
-                nodeHttp.get(baseUrl + fixtures.http.validAnnounceUrl, function(res) {
-                    var buffer = new Buffer(0);
-                    res.on('data', function(data) {
-                        buffer = Buffer.concat([buffer, data], buffer.length + data.length);
-                    });
-                    res.on('end', function() {
-                        bencode.decode(buffer).interval.should.equal(expectedInterval);
+                bencodedRequest()
+                    .get(fixtures.http.validAnnounceUrl)
+                    .expectStatus(200)
+                    .end(function(err, res, body) {
+                        body.interval.should.equal(expectedInterval);
                         engine.announce.restore();
-                        done();
+                        done(err);
                     });
-                });
             });
 
             it('should return the number of seeders', function(done) {
                 sinon.stub(engine, 'announce').yields(null, announceResult());
 
-                nodeHttp.get(baseUrl + fixtures.http.validAnnounceUrl, function(res) {
-                    var buffer = new Buffer(0);
-                    res.on('data', function(data) {
-                        buffer = Buffer.concat([buffer, data], buffer.length + data.length);
-                    });
-                    res.on('end', function() {
-                        bencode.decode(buffer).complete.should.equal(14132);
+                bencodedRequest()
+                    .get(fixtures.http.validAnnounceUrl)
+                    .expectStatus(200)
+                    .end(function(err, res, body) {
+                        body.complete.should.equal(14132);
                         engine.announce.restore();
-                        done();
+                        done(err);
                     });
-                });
             });
 
             it('should return the number of leechers', function(done) {
                 sinon.stub(engine, 'announce').yields(null, announceResult());
 
-                nodeHttp.get(baseUrl + fixtures.http.validAnnounceUrl, function(res) {
-                    var buffer = new Buffer(0);
-                    res.on('data', function(data) {
-                        buffer = Buffer.concat([buffer, data], buffer.length + data.length);
-                    });
-                    res.on('end', function() {
-                        bencode.decode(buffer).incomplete.should.equal(21341);
+                bencodedRequest()
+                    .get(fixtures.http.validAnnounceUrl)
+                    .expectStatus(200)
+                    .end(function(err, res, body) {
+                        body.incomplete.should.equal(21341);
                         engine.announce.restore();
-                        done();
+                        done(err);
                     });
-                });
             });
 
             describe('when a compact response has been requested', function() {
                 it('should return a compact peers list', function(done) {
                     sinon.stub(engine, 'announce').yields(null, announceResult());
 
-                    nodeHttp.get(baseUrl + fixtures.http.validAnnounceUrl, function(res) {
-                        var buffer = new Buffer(0);
-                        res.on('data', function(data) {
-                            buffer = Buffer.concat([buffer, data], buffer.length + data.length);
-                        });
-                        res.on('end', function() {
-                            var decoded = bencode.decode(buffer);
-                            compact2string.multi(decoded.peers).should.eql([
+                    bencodedRequest()
+                        .get(fixtures.http.validAnnounceUrl)
+                        .expectStatus(200)
+                        .end(function(err, res, body) {
+                            compact2string.multi(body.peers).should.eql([
                                 '1.2.3.4:58901',
                                 '2.2.3.4:58902',
                                 '3.2.3.4:58903',
@@ -333,9 +312,8 @@ describe('http', function() {
                                 '10.2.3.4:58910'
                             ]);
                             engine.announce.restore();
-                            done();
+                            done(err);
                         });
-                    });
                 });
             });
 
@@ -344,13 +322,11 @@ describe('http', function() {
                     var expectedResult = announceResult();
                     sinon.stub(engine, 'announce').yields(null, expectedResult);
 
-                    nodeHttp.get(baseUrl + fixtures.http.validAnnounceUrlWithoutCompact, function(res) {
-                        var buffer = new Buffer(0);
-                        res.on('data', function(data) {
-                            buffer = Buffer.concat([buffer, data], buffer.length + data.length);
-                        });
-                        res.on('end', function() {
-                            var peers = bencode.decode(buffer).peers.map(function(peer) {
+                    bencodedRequest()
+                        .get(fixtures.http.validAnnounceUrlWithoutCompact)
+                        .expectStatus(200)
+                        .end(function(err, res, body) {
+                            var peers = body.peers.map(function(peer) {
                                 peer.ip = peer.ip.toString();
                                 return peer;
                             });
@@ -368,19 +344,18 @@ describe('http', function() {
                             peers.should.containEql({ 'peer id': expectedResult.peers[9].id, ip: '10.2.3.4', port: 58910 });
 
                             engine.announce.restore();
-                            done();
+                            done(err);
                         });
-                    });
                 });
 
                 describe('when a client asks to ommit the peer id field', function() {
                     it('should return a non-compact peers list without the peer id field', function(done) {
                         sinon.stub(engine, 'announce').yields(null, announceResult());
 
-                        request(http.app)
+                        bencodedRequest()
                             .get(fixtures.http.validAnnounceUrlWithNoPeerId)
-                            .end(function(err, res) {
-                                var peers = bencode.decode(res.text).peers.map(function(peer) {
+                            .end(function(err, res, body) {
+                                var peers = body.peers.map(function(peer) {
                                     peer.ip = peer.ip.toString();
                                     return peer;
                                 });
@@ -397,6 +372,7 @@ describe('http', function() {
                                     { ip: '9.2.3.4', port: 58909 },
                                     { ip: '10.2.3.4', port: 58910 },
                                 ]);
+
                                 engine.announce.restore();
                                 done(err);
                             });
@@ -427,5 +403,16 @@ describe('http', function() {
                 { id: crypto.pseudoRandomBytes(20), ip: '10.2.3.4', port: 58910 }
             ]
         };
+    }
+
+    function bencodedRequest() {
+        return request(http.app)
+            .use(function(options, next) {
+                options.encoding = null;
+                next(options);
+            })
+            .parser(function(body, fn) {
+                fn(null, bencode.decode(body));
+            });
     }
 });
